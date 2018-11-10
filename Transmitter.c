@@ -27,7 +27,7 @@ int main()
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[5];
 	FILE *configFile = fopen("config.txt", "r");
-	FILE *logFile = fopen("log.txt", "a");
+	FILE *logFile = fopen("./log.txt", "a");
 	FILE *fileToSend;
 	int seqNum = 1;
 	int onTheLastPacket = 0;
@@ -40,8 +40,8 @@ int main()
 
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
-	fprintf(stdout, "Got network IP and port number\n");
-	fprintf(logFile, "Got network IP and port number\n");
+	fprintf(stdout, "Network IP: %s\nPort: %s\n", networkIP, networkPort);
+	fprintf(logFile, "Network IP: %s\nPort: %s\n", networkIP, networkPort);
 
 	// Create socket
 	transmitterSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -54,6 +54,8 @@ int main()
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(networkPort);
 
+	exit(0);
+	
 	// Open the file to send
 	fprintf(stdout, "Enter name of file\n");
 	fgets(buffer, sizeof(buffer), stdin);
