@@ -26,9 +26,10 @@ int main()
 {
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[5];
-	FILE *configFile = fopen("config.txt", "r");
-	FILE *logFile = fopen("./log.txt", "a");
+	FILE *configFile = fopen("./config.txt", "r");
+	FILE *logFile = fopen("./log.txt", "w");
 	FILE *fileToSend;
+	int allPacketsAckd = 1;
 	int seqNum = 1;
 	int onTheLastPacket = 0;
 	int timeoutLengthMs = 1000;
@@ -53,20 +54,21 @@ int main()
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(networkPort);
-
-	exit(0);
 	
 	// Open the file to send
 	fprintf(stdout, "Enter name of file\n");
 	fgets(buffer, sizeof(buffer), stdin);
+	buffer[strlen(buffer) - 1] = '\0';
 	fileToSend = fopen(buffer, "r");
-	fprintf(stdout, "Opened file to send\n");
-	fprintf(logFile, "Opened file to send\n");
+	fprintf(stdout, "Opened file: %s\n", buffer);
+	fprintf(logFile, "Opened file: %s\n", buffer);
 	memset(buffer, 0, BUFLEN); // Reset buffer
 
 	// Loop forever until there’s nothing else to do
 	while (1)
 	{
+		allPacketsAckd = 1;
+		
 		// Create the DATA packets
 		for (int i = 0; i < (SLIDING_WINDOW_SIZE - 1); i++, seqNum++)
 		{
@@ -74,9 +76,12 @@ int main()
 			{
 				packets[i].PacketType = DATA;
 				packets[i].SeqNum = seqNum;
-				packets[i].WindowSize = fread(packets[i].data, sizeof(buffer), sizeof(char), fileToSend);
+				packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
 				packets[i].AckNum = packets[i].SeqNum * packets[i].WindowSize + 1;
 		
+				fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n\tWindowSize: %d\n\tAckNum: %d\n", i, packets[i].PacketType, packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n\tWindowSize: %d\n\tAckNum: %d\n", i, packets[i].PacketType, packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				
 				// If the window size is less than BUFFER length, then we have the last bits of data
 				if (packets[i].WindowSize < BUFLEN)
 				{
@@ -89,6 +94,10 @@ int main()
 		// Create the EOT packet
 		packets[SLIDING_WINDOW_SIZE - 1].PacketType = EOT;
 		packets[SLIDING_WINDOW_SIZE - 1].SeqNum = seqNum++;
+		fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
+		fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
+
+		break;
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
@@ -117,12 +126,12 @@ int main()
 			{
 				if (packets[i].PacketType != UNINITIALISED)
 				{
-					onTheLastPacket = 0;
+					allPacketsAckd = 0;
 					break;
 				}
 			}
 			
-			if (onTheLastPacket)
+			if (allPacketsAckd)
 			{
 				break;
 			}
