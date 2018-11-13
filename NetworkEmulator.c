@@ -41,7 +41,7 @@ void forward(struct forwardArgs *args)
 	}
 	else
 	{
-		fprintf(stdout, "Forwarded Packet[%d]\n", packet.SeqNum);
+		fprintf(stdout, "Forwarded Packet[%d] to %s:%d\n", packet.SeqNum, inet_ntoa(args->DestSvr->sin_addr), ntohs(args->DestSvr->sin_port));
 		fprintf(logFile, "Forwarded Packet[%d]\n", packet.SeqNum);
 	}
 }
@@ -157,12 +157,19 @@ int main()
 			}
 		}
 		
-		args.DestSvr = &fromAddr;
+		args.DestSvr->sin_family = AF_INET;
+		inet_aton(inet_ntoa(fromAddr.sin_addr), &args.DestSvr->sin_addr);
+		args.DestSvr->sin_port = htons(ntohs(fromAddr.sin_port));
 		
 		while (eotSent == 0)
 		{
-			recvfromResult = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen);
-			if ((fromAddr.sin_addr.s_addr == recSvr.sin_addr.s_addr) && (fromAddr.sin_port == recSvr.sin_port))
+			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) < 0)
+			{
+				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
+				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
+				break;
+			}
+			else
 			{
 				if (recvPacket.PacketType == EOT)
 				{
@@ -171,12 +178,6 @@ int main()
 				args.Packet = recvPacket;
 				pthread_create(&thread, NULL, forward, &args); 
     			pthread_join(thread, NULL);
-			}
-			else
-			{
-				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				break;
 			}
 		}
 	}
