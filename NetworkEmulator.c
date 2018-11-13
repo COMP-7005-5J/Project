@@ -3,7 +3,7 @@
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h> // getsockname()
 #include <unistd.h> // sleep()
-#include <errno.h> // error
+#include <errno.h> // errno
 #include <string.h>
 #include <arpa/inet.h> // ntoa()
 
@@ -53,7 +53,6 @@ int main()
 	struct packet recvPacket;
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
-	struct sockaddr_in testSvrInfo;
 	struct sockaddr_in fromAddr;
 	
 	// Get the network emulator’s configurations
@@ -70,6 +69,7 @@ int main()
 	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
+	//netEmuSvr.sin_addr.s_addr = INADDR_ANY;
 	netEmuSvr.sin_port = htons(atoi(networkPort));
 	fprintf(stdout, "Created network emulator server\n");
 	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
@@ -80,7 +80,12 @@ int main()
 	
 	// Bind socket
 	len = sizeof(netEmuSvr);
-	bind(emulatorSocket, (struct sockaddr *) &netEmuSvr, &len);
+	if (bind(emulatorSocket, (struct sockaddr *) &netEmuSvr, len) < 0)
+	{
+		fprintf(stdout, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		fprintf(logFile, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		exit(0);
+	}
 	fprintf(stdout, "Binded socket\n");
 	fprintf(logFile, "Binded socket\n");
 	
@@ -96,7 +101,7 @@ int main()
 	fprintf(logFile, "\tPort: %d\n", ntohs(recSvr.sin_port));
 	
 	// Get the BER
-	fprintf(stdout, "Enter your desired Bit Error Rate % (int)\n");
+	fprintf(stdout, "Enter your desired Bit Error Rate percentage (int)\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	args.BitErrorRate = atoi(buffer);
@@ -115,7 +120,7 @@ int main()
 	while (eotRecvd == 0)
 	{
 		fromLen = sizeof fromAddr;
-		fprintf(stdout, "Waiting for packet on %s:%d...\n", inet_ntoa(netEmuSvr.sin_addr), ntohs(netEmuSvr.sin_port));
+		fprintf(stdout, "Waiting for packet...\n");
 		recvfromResult = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen);
 		fprintf(stdout, "Packet received...\n");
 		if (recvfromResult > 0)

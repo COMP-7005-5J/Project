@@ -6,6 +6,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <arpa/inet.h> // ntoa()
+#include <errno.h> // errno
 
 #define BUFLEN 255
 #define SLIDING_WINDOW_SIZE 4
@@ -49,14 +50,24 @@ int main()
 
 	// Create socket
 	transmitterSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutLengthMs, sizeof(timeoutLengthMs));
-	fprintf(stdout, "Created socket\n");
-	fprintf(logFile, "Created socket\n");
+	if (transmitterSocket > 0)
+	{
+		setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutLengthMs, sizeof(timeoutLengthMs));
+		fprintf(stdout, "Created socket\n");
+		fprintf(logFile, "Created socket\n");
+	}
+	else
+	{
+		fprintf(stdout, "ERROR: Creating socket. %s\n", strerror(errno));
+		fprintf(logFile, "ERROR: Creating socket. %s\n", strerror(errno));
+		exit(0);
+	}
+	
 	
 	// Set up transmitter server
 	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
 	transmitterSvr.sin_family = AF_INET;
-	transmitterSvr.sin_addr.s_addr = INADDR_ANY;
+	transmitterSvr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	transmitterSvr.sin_port = htons(8080);
 	fprintf(stdout, "Created transmitter server\n");
 	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
@@ -67,7 +78,12 @@ int main()
 	
 	// Bind socket
 	len = sizeof(transmitterSvr);
-	bind(transmitterSocket, (struct sockaddr *) &transmitterSvr, &len);
+	if (bind(transmitterSocket, (struct sockaddr *) &transmitterSvr, len) < 0)
+	{
+		fprintf(stdout, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		fprintf(logFile, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		exit(0);
+	}
 	fprintf(stdout, "Binded socket\n");
 	fprintf(logFile, "Binded socket\n");
 
