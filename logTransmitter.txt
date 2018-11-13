@@ -1,5 +1,5 @@
-Network IP: 192.168.0.3
-Port: 8001
+Network IP: 192.168.1.68
+Port: 8888
 Created socket
 Opened file: 1.txt
 Packet[0]

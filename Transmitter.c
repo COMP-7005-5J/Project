@@ -27,7 +27,7 @@ int main()
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[5];
 	FILE *configFile = fopen("./config.txt", "r");
-	FILE *logFile = fopen("./log.txt", "w");
+	FILE *logFile = fopen("./logTransmitter.txt", "w");
 	FILE *fileToSend;
 	int allPacketsAckd = 1;
 	int seqNum = 1;
@@ -138,5 +138,6 @@ int main()
 		}
 	}
 
+	close(transmitterSocket);
 	fclose(configFile);
 }
