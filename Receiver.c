@@ -21,49 +21,21 @@ struct packet
 	int AckNum;
 };
 
-/*
-struct forwardArgs
-{
-	int *RecvSocket;
-	struct packet Packet;
-	struct sockaddr_in *DestSvr;
-};
-
-void forward(struct forwardArgs *args)
-{
-	FILE *logFile = fopen("./logEmulator.txt", "a");
-	struct packet packet = args->Packet;
-	sleep(*(args->AvgDelay));
-	if (sendto(*(args->EmulatorSocket), &packet, sizeof(struct packet), 0, args->DestSvr, sizeof(*(args->DestSvr))) < 0)
-	{
-		fprintf(stdout, "ERROR: Couldn't send packet. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Couldn't send packet. %s\n", strerror(errno));
-	}
-	else
-	{
-		fprintf(stdout, "Forwarded Packet[%d]\n", packet.SeqNum);
-		fprintf(logFile, "Forwarded Packet[%d]\n", packet.SeqNum);
-	}
-}
-*/
-
 int main()
 {
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
-	FILE *destFile = fopen("./2.txt", "a");
+	FILE *destFile;
 	FILE *logFile = fopen("./logReceiver.txt", "w");
 	int recvSocket;
 	int eotRecvd = 0;
 	int eotSent = 0;
 	int numOfPktsRecvd = 0;
 	struct packet *pktsToAck = malloc(1 * sizeof(*pktsToAck));
-	//pthread_t threads[SLIDING_WINDOW_SIZE];
 	pthread_t thread;
 	socklen_t fromLen;
 	socklen_t len;
-	//struct forwardArgs args;
 	struct packet recvPacket;
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
@@ -109,7 +81,6 @@ int main()
 	netEmuSvr.sin_family = AF_INET;
 	inet_aton(networkIP, &netEmuSvr.sin_addr);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	//args.DestSvr = &netEmuSvr;
 	fprintf(stdout, "Created destination server\n");
 	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(stdout, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
@@ -123,8 +94,10 @@ int main()
 	{
 		while (eotRecvd == 0)
 		{
+			// Receive packets
 			if (recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) > 0)
 			{
+				// Extent array to store another packet
 				++numOfPktsRecvd;
 				pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
 				if (recvPacket.PacketType == EOT)
@@ -139,15 +112,13 @@ int main()
 				fprintf(stdout, "Received Packet[%d]\n", recvPacket.SeqNum);
 				fprintf(logFile, "Received Packet[%d]\n", recvPacket.SeqNum);
 				
+				// Put packet into array to keep track of what to ACK
 				pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
 				pktsToAck[numOfPktsRecvd-1].AckNum = recvPacket.SeqNum;
-				fprintf(destFile, "%s", recvPacket.data);
 				
-				/*
-				args.Packet = recvPacket;
-				pthread_create(&thread, NULL, forward, &args); 
-    			pthread_join(thread, NULL);
-    			*/
+				destFile = fopen("./2.txt", "a");
+				fprintf(destFile, "%s", recvPacket.data);
+				fclose(destFile);
 			}
 			else
 			{
@@ -156,27 +127,26 @@ int main()
 			}
 		}
 		
-		//args.DestSvr = &fromAddr;
-		
-		//while (eotSent == 0)
-		//{
-			for (int i = 0; i < numOfPktsRecvd; i++)
+		// Send ACKs for each packet received
+		for (int i = 0; i < numOfPktsRecvd; i++)
+		{
+			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr)) < 0)
 			{
-				if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr)) < 0)
-				{
-					fprintf(stdout, "Error: Couldn't send packet. %s\n", strerror(errno));
-					fprintf(logFile, "Error: Couldn't send packet. %s\n", strerror(errno));
-				}
-				else
-				{
-					fprintf(stdout, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
-					fprintf(logFile, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
-				}
+				fprintf(stdout, "Error: Couldn't send packet. %s\n", strerror(errno));
+				fprintf(logFile, "Error: Couldn't send packet. %s\n", strerror(errno));
 			}
-		//}
+			else
+			{
+				fprintf(stdout, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
+				fprintf(logFile, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
+			}
+		}
+		
+		// Reset variables
 		numOfPktsRecvd = 0;
 		eotRecvd = 0;
-		eotSent = 0;
+		free(pktsToAck);
+		pktsToAck = malloc(1 * sizeof(*pktsToAck));
 	}
 	free(pktsToAck);
 	fclose(configFile);
