@@ -38,7 +38,7 @@ void forward(struct forwardArgs args)
 int main()
 {
 	char buffer[BUFLEN];
-	char networkIP[16], networkPort[5], receiverIP[16], receiverPort[5];
+	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *logFile = fopen("./logEmulator.txt", "w");
 	int emulatorSocket;
@@ -54,7 +54,7 @@ int main()
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in testSvrInfo;
-	struct sockaddr_storage fromAddr;
+	struct sockaddr_in fromAddr;
 	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
@@ -67,10 +67,11 @@ int main()
 	fprintf(logFile, "Created socket\n");
 	
 	// Set up network emulator server
+	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	fprintf(stdout, "Created server\n");
+	fprintf(stdout, "Created network emulator server\n");
 	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(stdout, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	fprintf(logFile, "Created server\n");
@@ -114,8 +115,9 @@ int main()
 	while (eotRecvd == 0)
 	{
 		fromLen = sizeof fromAddr;
-		recvfromResult = recvfrom(emulatorSocket, &args.Packet, BUFLEN, 0, (struct sockaddr*)&fromAddr, &fromLen);
-
+		fprintf(stdout, "Waiting for packet on %s:%d...\n", inet_ntoa(netEmuSvr.sin_addr), ntohs(netEmuSvr.sin_port));
+		recvfromResult = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen);
+		fprintf(stdout, "Packet received...\n");
 		if (recvfromResult > 0)
 		{
 			if (recvPacket.PacketType == EOT)

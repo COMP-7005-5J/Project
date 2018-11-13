@@ -1,6 +1,12 @@
-Network IP: 192.168.1.68
-Port: 8888
+Loaded configurations
 Created socket
+Created server
+	Address: 0.0.0.0
+	Port: 8080
+Binded socket
+Created server
+	Address: 127.0.0.1
+	Port: 15292
 Opened file: 1.txt
 Packet[0]
 	PacketType: 1

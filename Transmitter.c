@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
+#include <arpa/inet.h> // ntoa()
 
 #define BUFLEN 255
 #define SLIDING_WINDOW_SIZE 4
@@ -25,7 +26,7 @@ struct packet
 int main()
 {
 	char buffer[BUFLEN];
-	char networkIP[16], networkPort[5];
+	char networkIP[16], networkPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *logFile = fopen("./logTransmitter.txt", "w");
 	FILE *fileToSend;
@@ -34,26 +35,52 @@ int main()
 	int onTheLastPacket = 0;
 	int timeoutLengthMs = 1000;
 	int transmitterSocket;
+	socklen_t len;
 	struct packet packets[SLIDING_WINDOW_SIZE];
 	struct packet recvPackets[SLIDING_WINDOW_SIZE];
 	ssize_t numOfElementsRead = 0;
 	struct sockaddr_in netEmuSvr;
+	struct sockaddr_in transmitterSvr;
 
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
-	fprintf(stdout, "Network IP: %s\nPort: %s\n", networkIP, networkPort);
-	fprintf(logFile, "Network IP: %s\nPort: %s\n", networkIP, networkPort);
+	fprintf(stdout, "Loaded configurations\n");
+	fprintf(logFile, "Loaded configurations\n");
 
 	// Create socket
 	transmitterSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutLengthMs, sizeof(timeoutLengthMs));
 	fprintf(stdout, "Created socket\n");
 	fprintf(logFile, "Created socket\n");
-	setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeoutLengthMs, sizeof(timeoutLengthMs));
+	
+	// Set up transmitter server
+	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
+	transmitterSvr.sin_family = AF_INET;
+	transmitterSvr.sin_addr.s_addr = INADDR_ANY;
+	transmitterSvr.sin_port = htons(8080);
+	fprintf(stdout, "Created transmitter server\n");
+	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
+	fprintf(stdout, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
+	fprintf(logFile, "Created server\n");
+	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
+	fprintf(logFile, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
+	
+	// Bind socket
+	len = sizeof(transmitterSvr);
+	bind(transmitterSocket, (struct sockaddr *) &transmitterSvr, &len);
+	fprintf(stdout, "Binded socket\n");
+	fprintf(logFile, "Binded socket\n");
 
 	// Set up destination server
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
-	netEmuSvr.sin_port = htons(networkPort);
+	netEmuSvr.sin_port = htons(atoi(networkPort));
+	fprintf(stdout, "Created network emulator server\n");
+	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	fprintf(stdout, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	fprintf(logFile, "Created server\n");
+	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
 	// Open the file to send
 	fprintf(stdout, "Enter name of file\n");
@@ -97,16 +124,20 @@ int main()
 		fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
 		fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
 
-		break;
+		//break;
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
-				sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr));
+			{
+				ssize_t r = sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr));
+				fprintf(stdout, "Sent Packet[%d] to %s:%d\n", i, inet_ntoa(netEmuSvr.sin_addr), ntohs(netEmuSvr.sin_port));
+			}
 			if (packets[i].WindowSize < BUFLEN)
 				break;
 		}
+		break;
 		
 		// Receive the ACKs
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
