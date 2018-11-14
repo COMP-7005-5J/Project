@@ -1,11 +1,12 @@
 #include <stdio.h> // FILE
 #include <stdlib.h> // fprintf()
 #include <netinet/in.h> // struct sockaddr_in
-#include <sys/socket.h> // getsockname()
+#include <sys/socket.h> // getsockname(), setsockopt()
 #include <unistd.h> // sleep()
 #include <errno.h> // errno
 #include <string.h>
 #include <arpa/inet.h> // ntoa()
+#include <sys/time.h> // struct timeval
 
 #define BUFLEN 255
 #define DATA 1
@@ -14,6 +15,7 @@
 
 int bitErrorRate;
 int emulatorSocket;
+int directionToRec = 1;
 struct sockaddr_in *DestSvr;
 
 struct packet
@@ -28,29 +30,54 @@ struct packet
 void forward(struct packet pkt)
 {
 	FILE *logFile = fopen("./logEmulator.txt", "a");
-	if (sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr)) < 0)
+	char *type = malloc(4*sizeof(*type));
+	int repNum;
+	
+	switch(pkt.PacketType)
 	{
-		fprintf(stdout, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
+		case (DATA):
+			strcpy(type, "DATA");
+			repNum = pkt.SeqNum;
+			break;
+		case (EOT):
+			strcpy(type, "EOT");
+			repNum = pkt.SeqNum;
+			break;
+		default:
+			strcpy(type, "ACK");
+			repNum = pkt.AckNum;
+			break;
+	}
+	
+	if ((rand() % 100) > bitErrorRate)
+	{
+		if (sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr)) < 0)
+		{
+			fprintf(stdout, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
+			fprintf(logFile, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
+		}
+		else
+		{
+			if (directionToRec)
+			{
+				fprintf(stdout, "%s[%d] >>> %s:%d\n", type, repNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+				fprintf(logFile, "%s[%d] >>> %s:%d\n", type, repNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+			}
+			else
+			{
+				fprintf(stdout, "%s:%d <<< %s[%d]\n", inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port), type, repNum);
+				fprintf(logFile, "%s:%d <<< %s[%d]\n", inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port), type, repNum);
+			}
+		}
 	}
 	else
 	{
-		if (pkt.PacketType == DATA)
-		{
-			fprintf(stdout, "Forwarded Data Packet[%d] to %s:%d\n", pkt.SeqNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
-			fprintf(logFile, "Forwarded Data Packet[%d]\n", pkt.SeqNum);
-		}
-		else if (pkt.PacketType == EOT)
-		{
-			fprintf(stdout, "Forwarded EOT Packet[%d] to %s:%d\n", pkt.SeqNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
-			fprintf(logFile, "Forwarded Data Packet[%d]\n", pkt.SeqNum);
-		}
-		else if (pkt.PacketType == ACK)
-		{
-			fprintf(stdout, "Forwarded ACK Packet[%d] to %s:%d\n", pkt.AckNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
-			fprintf(logFile, "Forwarded ACK Packet[%d] to %s:%d\n", pkt.AckNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
-		}
+		fprintf(stdout, "Dropped %s[%d]\n", type, repNum);
+		fprintf(logFile, "Dropped %s[%d]\n", type, repNum);
 	}
+	
+	fclose(logFile);
+	free(type);
 }
 
 int main()
@@ -63,8 +90,6 @@ int main()
 	int eotRecvd = 0;
 	int eotSent = 0;
 	int pktsDelayed = 0;
-	int recvfromResult = 0;
-	pthread_t thread;
 	socklen_t fromLen;
 	socklen_t len;
 	struct packet recvPacket;
@@ -72,6 +97,7 @@ int main()
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in fromAddr;
+	struct timeval timeout = { .tv_sec = 4, .tv_usec = 0};
 	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
@@ -80,6 +106,7 @@ int main()
 
 	// Create socket
 	emulatorSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	setsockopt(emulatorSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 	fprintf(stdout, "Created socket\n");
 	fprintf(logFile, "Created socket\n");
 	
@@ -137,14 +164,14 @@ int main()
 	
 	while (1)
 	{
+	
+		fprintf(stdout, "Waiting for DATA...\n");
 		while (eotRecvd == 0)
 		{
 			fromLen = sizeof(fromAddr);
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) < 0)
 			{
-				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				break;
+				continue;
 			}
 			else
 			{
@@ -165,14 +192,18 @@ int main()
 		
 		DestSvr = &fromAddr;
 		pktsDelayed = 0;
+		directionToRec = 0;
+		fprintf(stdout, "\n");
 		
+		fprintf(stdout, "Waiting for ACKs...\n");
 		while (eotSent == 0)
 		{
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
 			{
-				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				exit(0);
+				// Timeout occurred
+				fprintf(stdout, "=============\nTimeout occurred\n\n");
+				fprintf(logFile, "=============\nTimeout occurred\n\n");
+				break;
 			}
 			else
 			{
@@ -196,6 +227,8 @@ int main()
 		eotSent = 0;
 		DestSvr = &recSvr;
 		pktsDelayed = 0;
+		directionToRec = 1;
+		printf("\n");
 	}
 	fclose(configFile);
 	close(emulatorSocket);
