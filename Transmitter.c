@@ -32,12 +32,14 @@ int main()
 	FILE *logFile = fopen("./logTransmitter.txt", "w");
 	FILE *fileToSend;
 	int allPacketsAckd = 1;
+	int eotRecvd = 0;
 	int seqNum = 1;
 	int onTheLastPacket = 0;
 	int timeoutLengthMs = 1000;
 	int transmitterSocket;
 	socklen_t len;
 	struct packet packets[SLIDING_WINDOW_SIZE];
+	struct packet recvPacket;
 	struct packet recvPackets[SLIDING_WINDOW_SIZE];
 	ssize_t numOfElementsRead = 0;
 	struct sockaddr_in netEmuSvr;
@@ -87,7 +89,7 @@ int main()
 	fprintf(stdout, "Binded socket\n");
 	fprintf(logFile, "Binded socket\n");
 
-	// Set up destination server
+	// Set up network emulator server
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
@@ -106,69 +108,118 @@ int main()
 	fprintf(stdout, "Opened file: %s\n", buffer);
 	fprintf(logFile, "Opened file: %s\n", buffer);
 	memset(buffer, 0, BUFLEN); // Reset buffer
-
+	
+	len = sizeof(netEmuSvr);
+	
 	// Loop forever until there’s nothing else to do
 	while (1)
 	{
-		allPacketsAckd = 1;
-		
 		// Create the DATA packets
-		for (int i = 0; i < (SLIDING_WINDOW_SIZE - 1); i++, seqNum++)
+		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++, seqNum++)
 		{
 			if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
 			{
-				packets[i].PacketType = DATA;
+				
+				//packets[i].PacketType = DATA;
 				packets[i].SeqNum = seqNum;
 				packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
-				packets[i].AckNum = packets[i].SeqNum * packets[i].WindowSize + 1;
+				packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
+				if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
+				{
+					packets[i].PacketType = EOT;
+				}
+				else
+				{
+					packets[i].PacketType = DATA;
+				}
 		
-				fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n\tWindowSize: %d\n\tAckNum: %d\n", i, packets[i].PacketType, packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
-				fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n\tWindowSize: %d\n\tAckNum: %d\n", i, packets[i].PacketType, packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+				fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
 				
 				// If the window size is less than BUFFER length, then we have the last bits of data
 				if (packets[i].WindowSize < BUFLEN)
 				{
 					onTheLastPacket = 1;
+					seqNum++;
 					break;
 				}
 			}
 		}
 		
+		/*
 		// Create the EOT packet
 		packets[SLIDING_WINDOW_SIZE - 1].PacketType = EOT;
-		packets[SLIDING_WINDOW_SIZE - 1].SeqNum = seqNum++;
-		fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
-		fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tSeqNum: %d\n", (SLIDING_WINDOW_SIZE - 1), packets[SLIDING_WINDOW_SIZE - 1].PacketType, packets[SLIDING_WINDOW_SIZE - 1].SeqNum);
-
-		//break;
+		//packets[SLIDING_WINDOW_SIZE - 1].SeqNum = seqNum++;
+		fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n", packets[SLIDING_WINDOW_SIZE - 1].SeqNum, packets[SLIDING_WINDOW_SIZE - 1].PacketType);
+		fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n", packets[SLIDING_WINDOW_SIZE - 1].SeqNum, packets[SLIDING_WINDOW_SIZE - 1].PacketType);
+		*/
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
-				ssize_t r = sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr));
-				fprintf(stdout, "Sent Packet[%d] to %s:%d\n", i, inet_ntoa(netEmuSvr.sin_addr), ntohs(netEmuSvr.sin_port));
+				if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr)) < 0)
+				{
+					fprintf(stdout, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+					fprintf(logFile, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+				}
+				else
+				{
+					fprintf(stdout, "Sent Packet[%d]\n", packets[i].SeqNum);
+					fprintf(logFile, "Sent Packet[%d]\n", packets[i].SeqNum);
+				}
 			}
-			if (packets[i].WindowSize < BUFLEN)
-				break;
 		}
-		break;
+		//break;
 		
 		// Receive the ACKs
+		while (eotRecvd == 0)
+		{
+			if (recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len) < 0)
+			{
+				fprintf(stdout, "ERROR: Couldn't receive ACKs. %s\n", strerror(errno));
+				fprintf(logFile, "ERROR: Couldn't receive ACKs. %s\n", strerror(errno));
+			}
+			else
+			{
+				if (recvPacket.PacketType == EOT)
+				{
+					eotRecvd = 1;
+				}
+				
+				for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+				{
+					if (recvPacket.AckNum == packets[i].SeqNum)
+					{
+						packets[i].PacketType = UNINITIALISED;
+						memset(packets[i].data, 0, BUFLEN); // Reset buffer
+						fprintf(stdout, "Received ACK[%d]\n", recvPacket.AckNum);
+						fprintf(logFile, "Received ACK[%d]\n", recvPacket.AckNum);
+					}
+				}
+			}
+		}
+		/*
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
-			numOfElementsRead = recvfrom(transmitterSocket, &recvPackets[i], sizeof(recvPackets[i]), 0, &netEmuSvr, sizeof(netEmuSvr));
+			if (recvfrom(transmitterSocket, &recvPackets[i], sizeof(recvPackets[i]), 0, &netEmuSvr, sizeof(netEmuSvr)) < 0)
+			{
+				fprintf(stdout, "ERROR: Couldn't receive ACKs. %s\n", strerror(errno));
+				fprintf(logFile, "ERROR: Couldn't receive ACKs. %s\n", strerror(errno));
+			}
 			if (recvPackets[i].PacketType == EOT)
 				break;
 			else
 				packets[recvPackets[i].AckNum].PacketType = UNINITIALISED;
 		}
+		*/
 		
 		// If we're in the last phase...
 		if (onTheLastPacket)
 		{
 			// Make sure all the packets have been acknowledged
+			allPacketsAckd = 1;
 			for (int i = 0; i < (SLIDING_WINDOW_SIZE - 1); i++, seqNum++)
 			{
 				if (packets[i].PacketType != UNINITIALISED)
@@ -183,8 +234,12 @@ int main()
 				break;
 			}
 		}
+		
+		// Reset variables
+		eotRecvd = 0;
 	}
 
 	close(transmitterSocket);
 	fclose(configFile);
+	fclose(logFile);
 }

@@ -12,6 +12,10 @@
 #define EOT 2
 #define ACK 3
 
+int bitErrorRate;
+int emulatorSocket;
+struct sockaddr_in *DestSvr;
+
 struct packet
 {
 	int PacketType;
@@ -20,29 +24,32 @@ struct packet
 	int WindowSize;
 	int AckNum;
 };
-struct forwardArgs
-{
-	int *AvgDelay;
-	int *BitErrorRate;
-	int *EmulatorSocket;
-	struct packet Packet;
-	struct sockaddr_in *DestSvr;
-};
 
-void forward(struct forwardArgs *args)
+void forward(struct packet pkt)
 {
 	FILE *logFile = fopen("./logEmulator.txt", "a");
-	struct packet packet = args->Packet;
-	sleep(*(args->AvgDelay));
-	if (sendto(*(args->EmulatorSocket), &packet, sizeof(struct packet), 0, args->DestSvr, sizeof(*(args->DestSvr))) < 0)
+	if (sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr)) < 0)
 	{
-		fprintf(stdout, "ERROR: Couldn't send packet. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Couldn't send packet. %s\n", strerror(errno));
+		fprintf(stdout, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
+		fprintf(logFile, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
 	}
 	else
 	{
-		fprintf(stdout, "Forwarded Packet[%d] to %s:%d\n", packet.SeqNum, inet_ntoa(args->DestSvr->sin_addr), ntohs(args->DestSvr->sin_port));
-		fprintf(logFile, "Forwarded Packet[%d]\n", packet.SeqNum);
+		if (pkt.PacketType == DATA)
+		{
+			fprintf(stdout, "Forwarded Data Packet[%d] to %s:%d\n", pkt.SeqNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+			fprintf(logFile, "Forwarded Data Packet[%d]\n", pkt.SeqNum);
+		}
+		else if (pkt.PacketType == EOT)
+		{
+			fprintf(stdout, "Forwarded EOT Packet[%d] to %s:%d\n", pkt.SeqNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+			fprintf(logFile, "Forwarded Data Packet[%d]\n", pkt.SeqNum);
+		}
+		else if (pkt.PacketType == ACK)
+		{
+			fprintf(stdout, "Forwarded ACK Packet[%d] to %s:%d\n", pkt.AckNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+			fprintf(logFile, "Forwarded ACK Packet[%d] to %s:%d\n", pkt.AckNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+		}
 	}
 }
 
@@ -53,17 +60,15 @@ int main()
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *logFile = fopen("./logEmulator.txt", "w");
 	int avgDelay;
-	int bitErrorRate;
-	int emulatorSocket;
 	int eotRecvd = 0;
 	int eotSent = 0;
+	int pktsDelayed = 0;
 	int recvfromResult = 0;
-	//pthread_t threads[SLIDING_WINDOW_SIZE];
 	pthread_t thread;
 	socklen_t fromLen;
 	socklen_t len;
-	struct forwardArgs args;
 	struct packet recvPacket;
+	struct packet pkt;
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in fromAddr;
@@ -98,7 +103,6 @@ int main()
 		fprintf(logFile, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
-	args.EmulatorSocket = &emulatorSocket;
 	fprintf(stdout, "Binded socket\n");
 	fprintf(logFile, "Binded socket\n");
 	
@@ -106,63 +110,36 @@ int main()
 	recSvr.sin_family = AF_INET;
 	inet_aton(receiverIP, &recSvr.sin_addr);
 	recSvr.sin_port = htons(atoi(receiverPort));
-	args.DestSvr = &recSvr;
+	DestSvr = &recSvr;
 	fprintf(stdout, "Created destination server\n");
-	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(args.DestSvr->sin_addr));
-	fprintf(stdout, "\tPort: %d\n", ntohs(args.DestSvr->sin_port));
+	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(DestSvr->sin_addr));
+	fprintf(stdout, "\tPort: %d\n", ntohs(DestSvr->sin_port));
 	fprintf(logFile, "Created destination server\n");
-	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(args.DestSvr->sin_addr));
-	fprintf(logFile, "\tPort: %d\n", ntohs(args.DestSvr->sin_port));
+	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(DestSvr->sin_addr));
+	fprintf(logFile, "\tPort: %d\n", ntohs(DestSvr->sin_port));
 	
 	// Get the BER
 	fprintf(stdout, "Enter your desired Bit Error Rate percentage (int)\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	bitErrorRate = atoi(buffer);
-	args.BitErrorRate = &bitErrorRate;
 	memset(buffer, 0, sizeof(buffer)); // Reset buffer
-	fprintf(stdout, "BER: %d\n", *(args.BitErrorRate));
-	fprintf(logFile, "BER: %d\n", *(args.BitErrorRate));
+	fprintf(stdout, "BER: %d\n", bitErrorRate);
+	fprintf(logFile, "BER: %d\n", bitErrorRate);
 	
 	// Get the Avg Delay
 	fprintf(stdout, "Enter your desired delay when a packet is received and sent (seconds)\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	avgDelay = atoi(buffer);
-	args.AvgDelay = &avgDelay;
-	fprintf(stdout, "Avg Delay: %d\n", *(args.AvgDelay));
-	fprintf(logFile, "Avg Delay: %d\n", *(args.AvgDelay));
+	fprintf(stdout, "Avg Delay: %d\n", avgDelay);
+	fprintf(logFile, "Avg Delay: %d\n", avgDelay);
 	
 	while (1)
 	{
 		while (eotRecvd == 0)
 		{
-			fromLen = sizeof fromAddr;
-			recvfromResult = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen);
-			if (recvfromResult > 0)
-			{
-				if (recvPacket.PacketType == EOT)
-				{
-					eotRecvd = 1;
-				}
-				args.Packet = recvPacket;
-				pthread_create(&thread, NULL, forward, &args); 
-    			pthread_join(thread, NULL);
-			}
-			else
-			{
-				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
-				break;
-			}
-		}
-		
-		args.DestSvr->sin_family = AF_INET;
-		inet_aton(inet_ntoa(fromAddr.sin_addr), &args.DestSvr->sin_addr);
-		args.DestSvr->sin_port = htons(ntohs(fromAddr.sin_port));
-		
-		while (eotSent == 0)
-		{
+			fromLen = sizeof(fromAddr);
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) < 0)
 			{
 				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
@@ -173,13 +150,52 @@ int main()
 			{
 				if (recvPacket.PacketType == EOT)
 				{
-					eotSent = 1;
+					eotRecvd = 1;
 				}
-				args.Packet = recvPacket;
-				pthread_create(&thread, NULL, forward, &args); 
-    			pthread_join(thread, NULL);
+				
+				pkt = recvPacket;
+				if (pktsDelayed == 0)
+				{
+					sleep(avgDelay);
+					pktsDelayed = 1;
+				}
+				forward(pkt);
 			}
 		}
+		
+		DestSvr = &fromAddr;
+		pktsDelayed = 0;
+		
+		while (eotSent == 0)
+		{
+			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
+			{
+				fprintf(stdout, "Error: Couldn't receive packets. %s\n", strerror(errno));
+				fprintf(logFile, "Error: Couldn't receive packets. %s\n", strerror(errno));
+				exit(0);
+			}
+			else
+			{
+				if (recvPacket.PacketType == EOT)
+				{
+					eotSent = 1;
+				}
+				
+				pkt = recvPacket;
+				if (pktsDelayed == 0)
+				{
+					sleep(avgDelay);
+					pktsDelayed = 1;
+				}
+				forward(pkt);
+			}
+		}
+		
+		// Reset variables
+		eotRecvd = 0;
+		eotSent = 0;
+		DestSvr = &recSvr;
+		pktsDelayed = 0;
 	}
 	fclose(configFile);
 	close(emulatorSocket);

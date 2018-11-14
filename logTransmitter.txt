@@ -8,21 +8,33 @@ Created server
 	Address: 127.0.0.1
 	Port: 8001
 Opened file: 1.txt
-Packet[0]
-	PacketType: 1
-	SeqNum: 1
-	WindowSize: 255
-	AckNum: 256
 Packet[1]
 	PacketType: 1
-	SeqNum: 2
 	WindowSize: 255
-	AckNum: 511
+	AckNum: 256
 Packet[2]
 	PacketType: 1
-	SeqNum: 3
+	WindowSize: 255
+	AckNum: 511
+Packet[3]
+	PacketType: 1
 	WindowSize: 255
 	AckNum: 766
-Packet[3]
+Packet[4]
 	PacketType: 2
-	SeqNum: 4
+	WindowSize: 255
+	AckNum: 1021
+Sent Packet[1]
+Sent Packet[2]
+Sent Packet[3]
+Sent Packet[4]
+Received ACK[1]
+Received ACK[2]
+Received ACK[3]
+Received ACK[4]
+Packet[5]
+	PacketType: 2
+	WindowSize: 8
+	AckNum: 1029
+Sent Packet[5]
+Received ACK[5]

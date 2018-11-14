@@ -102,6 +102,7 @@ int main()
 				pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
 				if (recvPacket.PacketType == EOT)
 				{
+					fprintf(stdout, "EOT received\n");
 					eotRecvd = 1;
 					pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
 				}
