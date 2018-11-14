@@ -117,37 +117,40 @@ int main()
 		// Create the DATA packets
 		if (timeoutOccurred == 0)
 		{
-		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
-		{
-			if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
+			for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 			{
-				//packets[i].PacketType = DATA;
-				packets[i].SeqNum = seqNum;
-				packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
-				packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
-				if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
+				if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
 				{
-					packets[i].PacketType = EOT;
-				}
-				else
-				{
-					packets[i].PacketType = DATA;
-				}
-				
-				fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
-				fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+					//packets[i].PacketType = DATA;
+					packets[i].SeqNum = seqNum;
+					packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
+					packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
+					if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
+						{
+						packets[i].PacketType = EOT;
+					}
+					else
+					{
+						packets[i].PacketType = DATA;
+					}
 					
-				// If the window size is less than BUFFER length, then we have the last bits of data
-				if (packets[i].WindowSize < BUFLEN)
-				{
-					onTheLastPacket = 1;
+					fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+					fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+						
+					// If the window size is less than BUFFER length, then we have the last bits of data
+					if (packets[i].WindowSize < BUFLEN)
+					{
+						onTheLastPacket = 1;
+						seqNum++;
+						break;
+					}
 					seqNum++;
-					break;
 				}
-				seqNum++;
 			}
 		}
-		}
+		
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 
 		// Send the packets
 		do
@@ -180,6 +183,7 @@ int main()
 		} while(timeoutOccurred == 1);
 		
 		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		
 		// Receive the ACKs
 		while (eotRecvd == 0)
@@ -237,6 +241,7 @@ int main()
 		}
 		
 		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		
 		// Reset variables
 		eotRecvd = 0;

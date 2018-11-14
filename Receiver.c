@@ -23,6 +23,7 @@ struct packet
 
 int main()
 {
+	char *buffer = malloc(1 * sizeof(*buffer)), *temp = malloc(1 * sizeof(*temp));
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *destFile;
@@ -30,6 +31,7 @@ int main()
 	int recvSocket;
 	int duplicatePktRecvd = 0;
 	int eotRecvd = 0;
+	//int fileSize = 0;
 	int numOfPktsRecvd = 0;
 	struct packet *pktsToAck = malloc(1 * sizeof(*pktsToAck));
 	socklen_t fromLen;
@@ -86,10 +88,19 @@ int main()
 	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
+	destFile = fopen("./2.txt", "w+");
+	
 	while (1)
 	{
 		while (eotRecvd == 0)
 		{
+			/*
+			fseek(destFile, 0L, SEEK_END);
+			fileSize = (int) ftell(destFile);
+			fseek(destFile, 0L, SEEK_SET);
+			fread(buffer, fileSize, sizeof(char), destFile);
+			*/
+		
 			// Receive packets
 			if (recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) > 0)
 			{
@@ -110,24 +121,30 @@ int main()
 					pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
 					if (recvPacket.PacketType == EOT)
 					{
-						fprintf(stdout, "EOT received\n");
 						eotRecvd = 1;
 						pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
+						fprintf(stdout, "Received EOT[%d]\n", recvPacket.SeqNum);
+						fprintf(logFile, "Received EOT[%d]\n", recvPacket.SeqNum);
 					}
 					else
 					{
 						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
+						fprintf(stdout, "Received DATA[%d]\n", recvPacket.SeqNum);
+						fprintf(logFile, "Received DATA[%d]\n", recvPacket.SeqNum);
 					}
-					fprintf(stdout, "Received Packet[%d]\n", recvPacket.SeqNum);
-					fprintf(logFile, "Received Packet[%d]\n", recvPacket.SeqNum);
 				
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
 					pktsToAck[numOfPktsRecvd-1].AckNum = recvPacket.SeqNum;
 				
-					destFile = fopen("./2.txt", "a");
-					fprintf(destFile, "%s", recvPacket.data);
-					fclose(destFile);
+					if ((sizeof(buffer) / sizeof(*buffer)) < recvPacket.AckNum)
+					{
+						buffer = realloc(buffer, recvPacket.AckNum * sizeof(*buffer));
+						fseek(destFile, (recvPacket.AckNum-1), SEEK_SET);
+						fputc('\0', destFile);
+					}
+					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize), SEEK_SET);
+					fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile);
 				}
 				else
 				{
