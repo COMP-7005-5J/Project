@@ -88,9 +88,6 @@ Resent EOT[8]
 Received ACK[5]
 Received ACK[6]
 Received ACK[7]
-Received ACK[5]
-Received ACK[7]
-Received ACK[6]
 Received ACK[8]
 
 Window After ACKs { -5-, -6-, -7-, -8- }
@@ -106,190 +103,30 @@ Sent DATA[10]
 Sent DATA[11]
 Sent EOT[12]
 
-Received ACK[10]
+Received ACK[11]
+===Timeout occurred===
+
+Window After ACKs { DATA[9], DATA[10], -11-, EOT[12] }
+
+
+Window After Creating Packets { DATA[9], DATA[10], -11-, EOT[12] }
+Resent DATA[9]
+Resent DATA[10]
+Resent EOT[12]
+
+Received ACK[9]
 Received ACK[12]
 
-Window After ACKs { DATA[9], -10-, DATA[11], -12- }
+Window After ACKs { DATA[10], -11-, -11-, -12- }
 
+Created EOT[13]  	LEN: 209	ACK: 3270
 
-Window After Creating Packets { DATA[9], -10-, EOT[11], -12- }
-Sent DATA[9]
-Sent EOT[11]
+Window After Creating Packets { DATA[10], -11-, -11-, EOT[13] }
+Sent DATA[10]
+Sent EOT[13]
 
-===Timeout occurred===
-
-Window After ACKs { DATA[9], -10-, EOT[11], -12- }
-
-
-Window After Creating Packets { DATA[9], -10-, EOT[11], -12- }
-Resent DATA[9]
-Resent EOT[11]
-
-Received ACK[9]
-Received ACK[9]
-Received ACK[11]
-
-Window After ACKs { -9-, -10-, -11-, -12- }
-
-Created DATA[13]  	LEN: 255	ACK: 3316
-Created DATA[14]  	LEN: 255	ACK: 3571
-Created DATA[15]  	LEN: 255	ACK: 3826
-Created EOT[16]  	LEN: 255	ACK: 4081
-
-Window After Creating Packets { DATA[13], DATA[14], DATA[15], EOT[16] }
-Sent DATA[13]
-Sent DATA[14]
-Sent DATA[15]
-Sent EOT[16]
-
+Received ACK[10]
 Received ACK[13]
-Received ACK[15]
-===Timeout occurred===
 
-Window After ACKs { DATA[14], -15-, DATA[16], -19- }
-
-Created EOT[17]  	LEN: 255	ACK: 4336
-
-Window After Creating Packets { DATA[14], -15-, DATA[16], EOT[17] }
-Resent DATA[14]
-Resent DATA[16]
-Resent EOT[17]
-
-Received ACK[16]
-Received ACK[17]
-
-Window After ACKs { DATA[14], -15-, -16-, -17- }
-
-
-Window After Creating Packets { EOT[14], -15-, -16-, -17- }
-Sent EOT[14]
-
-===Timeout occurred===
-
-Window After ACKs { EOT[14], -15-, -16-, -17- }
-
-
-Window After Creating Packets { EOT[14], -15-, -16-, -17- }
-Resent EOT[14]
-
-===Timeout occurred===
-
-Window After ACKs { EOT[14], -15-, -16-, -17- }
-
-
-Window After Creating Packets { EOT[14], -15-, -16-, -17- }
-Resent EOT[14]
-
-Received ACK[14]
-
-Window After ACKs { -14-, -15-, -16-, -17- }
-
-Created DATA[18]  	LEN: 255	ACK: 4591
-Created DATA[19]  	LEN: 255	ACK: 4846
-Created DATA[20]  	LEN: 255	ACK: 5101
-Created EOT[21]  	LEN: 255	ACK: 5356
-
-Window After Creating Packets { DATA[18], DATA[19], DATA[20], EOT[21] }
-Sent DATA[18]
-Sent DATA[19]
-Sent DATA[20]
-Sent EOT[21]
-
-Received ACK[21]
-
-Window After ACKs { DATA[18], DATA[19], DATA[20], -21- }
-
-
-Window After Creating Packets { DATA[18], DATA[19], EOT[20], -21- }
-Sent DATA[18]
-Sent DATA[19]
-Sent EOT[20]
-
-Received ACK[18]
-Received ACK[20]
-
-Window After ACKs { DATA[19], -20-, -20-, -21- }
-
-Created EOT[22]  	LEN: 255	ACK: 5611
-
-Window After Creating Packets { DATA[19], -20-, -20-, EOT[22] }
-Sent DATA[19]
-Sent EOT[22]
-
-Received ACK[22]
-
-Window After ACKs { DATA[19], -20-, -20-, -22- }
-
-
-Window After Creating Packets { EOT[19], -20-, -20-, -22- }
-Sent EOT[19]
-
-===Timeout occurred===
-
-Window After ACKs { EOT[19], -20-, -20-, -22- }
-
-
-Window After Creating Packets { EOT[19], -20-, -20-, -22- }
-Resent EOT[19]
-
-===Timeout occurred===
-
-Window After ACKs { EOT[19], -20-, -20-, -22- }
-
-
-Window After Creating Packets { EOT[19], -20-, -20-, -22- }
-Resent EOT[19]
-
-Received ACK[19]
-
-Window After ACKs { -19-, -20-, -20-, -22- }
-
-Created DATA[23]  	LEN: 255	ACK: 5866
-Created DATA[24]  	LEN: 255	ACK: 6121
-Created EOT[25]  	LEN: 202	ACK: 6323
-
-Window After Creating Packets { DATA[23], DATA[24], EOT[25], -22- }
-Sent DATA[23]
-Sent DATA[24]
-Sent EOT[25]
-
-===Timeout occurred===
-
-Window After ACKs { DATA[23], DATA[24], EOT[25], -22- }
-
-
-Window After Creating Packets { DATA[23], DATA[24], EOT[25], -22- }
-Resent DATA[23]
-Resent DATA[24]
-Resent EOT[25]
-
-Received ACK[24]
-===Timeout occurred===
-
-Window After ACKs { DATA[23], -24-, EOT[25], -22- }
-
-
-Window After Creating Packets { DATA[23], -24-, EOT[25], -22- }
-Resent DATA[23]
-Resent EOT[25]
-
-Received ACK[25]
-
-Window After ACKs { DATA[23], -24-, -25-, -22- }
-
-
-Window After Creating Packets { EOT[23], -24-, -25-, -22- }
-Sent EOT[23]
-
-===Timeout occurred===
-
-Window After ACKs { EOT[23], -24-, -25-, -22- }
-
-
-Window After Creating Packets { EOT[23], -24-, -25-, -22- }
-Resent EOT[23]
-
-Received ACK[23]
-
-Window After ACKs { -23-, -24-, -25-, -22- }
+Window After ACKs { -10-, -11-, -11-, -13- }
 END OF SERVICE

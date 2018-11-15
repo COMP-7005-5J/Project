@@ -123,62 +123,62 @@ int main()
 		fprintf(stdout, "\n");
 		fprintf(logFile, "\n");
 		// Create the DATA packets
-			for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
+		for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
+		{
+			if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
 			{
-				if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
-				{
-					packets[i].SeqNum = seqNum;
-					packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
-					packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
-					if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
-					{
-						packets[i].PacketType = EOT;
-					}
-					else
-					{
-						packets[i].PacketType = DATA;
-					}
-					
-					fprintf(stdout, "Created ");
-					fprintf(logFile, "Created ");
-					switch (packets[i].PacketType)
-					{
-						case (DATA):
-							fprintf(stdout, "DATA");
-							fprintf(logFile, "DATA");
-							break;
-						case (EOT):
-							fprintf(stdout, "EOT");
-							fprintf(logFile, "EOT");
-							break;
-						default:
-							break;
-					}
-					fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
-					fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
-					// If the window size is less than BUFFER length, then we have the last bits of data
-					if (packets[i].WindowSize < BUFLEN)
-					{
-						onTheLastPacket = 1;
-						seqNum++;
-						break;
-					}
-					seqNum++;
-				}
-			}
-			
-			// In the event that a former packet[0] needs to be resent, we need to manually make it type EOT
-			for (int i = (SLIDING_WINDOW_SIZE-1); i >= 0; i--)
-			{
-				if (packets[i].PacketType != UNINITIALISED)
+				packets[i].SeqNum = seqNum;
+				packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
+				packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
+				if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
 				{
 					packets[i].PacketType = EOT;
+				}
+				else
+				{
+					packets[i].PacketType = DATA;
+				}
+				
+				fprintf(stdout, "Created ");
+				fprintf(logFile, "Created ");
+				switch (packets[i].PacketType)
+				{
+					case (DATA):
+						fprintf(stdout, "DATA");
+						fprintf(logFile, "DATA");
+						break;
+					case (EOT):
+						fprintf(stdout, "EOT");
+						fprintf(logFile, "EOT");
+						break;
+					default:
+						break;
+				}
+				fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				// If the window size is less than BUFFER length, then we have the last bits of data
+				if (packets[i].WindowSize < BUFLEN)
+				{
+					onTheLastPacket = 1;
+					seqNum++;
 					break;
 				}
+				seqNum++;
 			}
+		}
+			
+		// In the event that a former packet[0] needs to be resent, we need to manually make it type EOT
+		for (int i = (SLIDING_WINDOW_SIZE-1); i >= 0; i--)
+		{
+			if (packets[i].PacketType != UNINITIALISED)
+		 	{
+				packets[i].PacketType = EOT;
+				break;
+			}
+		}
 		
-			fprintf(stdout, "\n");
-			fprintf(logFile, "\n");
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		fprintf(stdout, "Window After Creating Packets { ");
 		fprintf(logFile, "Window After Creating Packets { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)

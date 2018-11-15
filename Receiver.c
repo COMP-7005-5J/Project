@@ -104,9 +104,10 @@ int main()
 				// Check if the packet received is a duplicate
 				for (int i = 0; i < numOfPktsRecvd; i++)
 				{
-					if (recvPacket.SeqNum == pktsToAck[i].SeqNum)
+					if (recvPacket.SeqNum == pktsToAck[i].AckNum)
 					{
 						duplicatePktRecvd = 1;
+						break;
 					}
 				}
 				
@@ -116,19 +117,23 @@ int main()
 					// Extent array to store another packet
 					++numOfPktsRecvd;
 					pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
+					fprintf(stdout, "Received ");
+					fprintf(logFile, "Received ");
 					if (recvPacket.PacketType == EOT)
 					{
 						eotRecvd = 1;
 						pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
-						fprintf(stdout, "Received EOT[%d]\n", recvPacket.SeqNum);
-						fprintf(logFile, "Received EOT[%d]\n", recvPacket.SeqNum);
+						fprintf(stdout, "EOT");
+						fprintf(logFile, "EOT");
 					}
 					else
 					{
 						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
-						fprintf(stdout, "Received DATA[%d]\n", recvPacket.SeqNum);
-						fprintf(logFile, "Received DATA[%d]\n", recvPacket.SeqNum);
+						fprintf(stdout, "DATA");
+						fprintf(logFile, "DATA");
 					}
+					fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+					fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
 				
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;

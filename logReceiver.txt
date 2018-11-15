@@ -9,121 +9,51 @@ Created destination server
 	Port: 8001
 STARTING SERVICE
 
-Received DATA[2]
-Received DATA[3]
-Received EOT[4]
+Received DATA[2]  	LEN: 255	ACK: 511
+Received DATA[3]  	LEN: 255	ACK: 766
+Received EOT[4]  	LEN: 255	ACK: 1021
 
 Sent ACK[2]
 Sent ACK[3]
 Sent ACK[4]
 
-Received EOT[1]
+Received EOT[1]  	LEN: 255	ACK: 256
 
 Sent ACK[1]
 
-Received EOT[1]
+Received EOT[1]  	LEN: 255	ACK: 256
 
 Sent ACK[1]
 
-Received DATA[5]
-Received DATA[6]
-Received DATA[7]
-Received DATA[5]
-Received DATA[6]
-Received DATA[7]
-Received DATA[6]
-Received EOT[8]
+Received DATA[5]  	LEN: 255	ACK: 1276
+Received DATA[6]  	LEN: 255	ACK: 1531
+Received DATA[7]  	LEN: 255	ACK: 1786
+Received EOT[8]  	LEN: 255	ACK: 2041
 
 Sent ACK[5]
 Sent ACK[6]
 Sent ACK[7]
-Sent ACK[5]
-Sent ACK[6]
-Sent ACK[7]
-Sent ACK[6]
 Sent ACK[8]
 
-Received DATA[10]
-Received EOT[12]
+Received DATA[10]  	LEN: 255	ACK: 2551
+Received DATA[11]  	LEN: 255	ACK: 2806
+Received EOT[12]  	LEN: 255	ACK: 3061
 
+Sent ACK[10]
+Sent ACK[11]
+Sent ACK[12]
+
+Received DATA[9]  	LEN: 255	ACK: 2296
+Received DATA[10]  	LEN: 255	ACK: 2551
+Received EOT[12]  	LEN: 255	ACK: 3061
+
+Sent ACK[9]
 Sent ACK[10]
 Sent ACK[12]
 
-Received DATA[9]
-Received DATA[9]
-Received EOT[11]
+Received DATA[10]  	LEN: 255	ACK: 2551
+Received EOT[13]  	LEN: 209	ACK: 3270
 
-Sent ACK[9]
-Sent ACK[9]
-Sent ACK[11]
-
-Received DATA[13]
-Received DATA[14]
-Received DATA[15]
-Received EOT[16]
-
+Sent ACK[10]
 Sent ACK[13]
-Sent ACK[14]
-Sent ACK[15]
-Sent ACK[16]
-
-Received DATA[14]
-Received DATA[16]
-Received EOT[17]
-
-Sent ACK[14]
-Sent ACK[16]
-Sent ACK[17]
-
-Received EOT[14]
-
-Sent ACK[14]
-
-Received DATA[20]
-Received EOT[21]
-
-Sent ACK[20]
-Sent ACK[21]
-
-Received DATA[18]
-Received DATA[19]
-Received EOT[20]
-
-Sent ACK[18]
-Sent ACK[19]
-Sent ACK[20]
-
-Received EOT[22]
-
-Sent ACK[22]
-
-Received EOT[19]
-
-Sent ACK[19]
-
-Received EOT[19]
-
-Sent ACK[19]
-
-Received EOT[25]
-
-Sent ACK[25]
-
-Received DATA[24]
-Received EOT[25]
-
-Sent ACK[24]
-Sent ACK[25]
-
-Received EOT[25]
-
-Sent ACK[25]
-
-Received EOT[23]
-
-Sent ACK[23]
-
-Received EOT[23]
-
-Sent ACK[23]
 
