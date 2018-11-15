@@ -92,7 +92,7 @@ int main()
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
-	FILE *logFile = fopen("./logEmulator.txt", "w");
+	FILE *logFile = fopen("./logEmulator.txt", "w+");
 	int avgDelay;
 	int eotRecvd = 0;
 	int eotSent = 0;
@@ -169,10 +169,12 @@ int main()
 	fprintf(stdout, "Avg Delay: %d\n", avgDelay);
 	fprintf(logFile, "Avg Delay: %d\n", avgDelay);
 	
+	fclose(logFile);
 	while (1)
 	{
-	
+		logFile = fopen("./logEmulator.txt", "a");
 		fprintf(stdout, "Waiting for DATA...\n");
+		fprintf(logFile, "Waiting for DATA...\n");
 		while (eotRecvd == 0)
 		{
 			fromLen = sizeof(fromAddr);
@@ -203,6 +205,7 @@ int main()
 		fprintf(stdout, "\n");
 		
 		fprintf(stdout, "Waiting for ACKs...\n");
+		fprintf(logFile, "Waiting for ACKs...\n");
 		while (eotSent == 0)
 		{
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
@@ -236,6 +239,7 @@ int main()
 		pktsDelayed = 0;
 		directionToRec = 1;
 		printf("\n");
+		fclose(logFile);
 	}
 	fclose(configFile);
 	close(emulatorSocket);
