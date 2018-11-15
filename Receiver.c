@@ -24,7 +24,6 @@ struct packet
 
 int main()
 {
-	char *buffer = malloc(1 * sizeof(*buffer)), *temp = malloc(1 * sizeof(*temp));
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *destFile;
@@ -32,7 +31,6 @@ int main()
 	int recvSocket;
 	int duplicatePktRecvd = 0;
 	int eotRecvd = 0;
-	//int fileSize = 0;
 	int numOfPktsRecvd = 0;
 	struct packet *pktsToAck = malloc(1 * sizeof(*pktsToAck));
 	socklen_t fromLen;
@@ -135,14 +133,9 @@ int main()
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
 					pktsToAck[numOfPktsRecvd-1].AckNum = recvPacket.SeqNum;
-				
-					if ((sizeof(buffer) / sizeof(*buffer)) < recvPacket.AckNum)
-					{
-						buffer = realloc(buffer, recvPacket.AckNum * sizeof(*buffer));
-						fseek(destFile, (recvPacket.AckNum-1), SEEK_SET);
-						fputc('\0', destFile);
-					}
-					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize), SEEK_SET);
+					
+					// Extend the file if the received data needs to be appended
+					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize-1), SEEK_SET);					
 					fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile);
 				}
 				else

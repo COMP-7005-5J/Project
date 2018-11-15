@@ -105,7 +105,7 @@ int main()
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in fromAddr;
-	struct timeval timeout = { .tv_sec = 4, .tv_usec = 0};
+	struct timeval timeout = { .tv_sec = 2, .tv_usec = 0};
 	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);

@@ -8,7 +8,7 @@ Created destination server
 	Address: 127.0.0.1
 	Port: 8002
 BER: 25
-Avg Delay: 5
+Avg Delay: 2
 STARTING SERVICE
 
 
@@ -170,3 +170,62 @@ Dropped EOT[21]
 
 Waiting for ACKs...
 ===Timeout occurred===
+
+Waiting for DATA...
+DATA[19] >>> 127.0.0.1:8002
+EOT[21] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[19]
+Dropped ACK[19]
+127.0.0.1:8080 <<< ACK[19]
+Dropped EOT[21]
+
+Waiting for DATA...
+Dropped EOT[21]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+EOT[21] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[21]
+
+Waiting for DATA...
+DATA[23] >>> 127.0.0.1:8002
+Dropped DATA[24]
+Dropped EOT[25]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+DATA[23] >>> 127.0.0.1:8002
+DATA[24] >>> 127.0.0.1:8002
+EOT[25] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[23]
+127.0.0.1:8080 <<< ACK[23]
+127.0.0.1:8080 <<< ACK[24]
+127.0.0.1:8080 <<< EOT[25]
+
+Waiting for DATA...
+Dropped EOT[26]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+EOT[26] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[26]
+
+Waiting for DATA...
+EOT[27] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[27]

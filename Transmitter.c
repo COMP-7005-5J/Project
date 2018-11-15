@@ -39,7 +39,7 @@ int main()
 	int timeoutOccurred = 0;
 	int onTheLastPacket = 0;
 	int windowSlideDistance = SLIDING_WINDOW_SIZE;
-	struct timeval timeout = { .tv_sec = 15, .tv_usec = 0};
+	struct timeval timeout = { .tv_sec = 7, .tv_usec = 0};
 	int transmitterSocket;
 	socklen_t len;
 	struct packet packets[SLIDING_WINDOW_SIZE];

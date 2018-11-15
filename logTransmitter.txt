@@ -224,3 +224,73 @@ Sent Packet[19]
 Sent Packet[21]
 
 ===Timeout occurred===
+
+Resent Packet[19]
+Resent Packet[21]
+
+===Timeout occurred===
+
+Resent Packet[19]
+Resent Packet[21]
+
+Received ACK[19]
+===Timeout occurred===
+
+Resent Packet[21]
+
+===Timeout occurred===
+
+Resent Packet[21]
+
+Received ACK[21]
+Received ACK[21]
+
+Created Packet[23]
+	PacketType: 1
+	WindowSize: 255
+	AckNum: 5866
+Created Packet[24]
+	PacketType: 1
+	WindowSize: 255
+	AckNum: 6121
+Created Packet[25]
+	PacketType: 2
+	WindowSize: 202
+	AckNum: 6323
+
+Sent Packet[23]
+Sent Packet[24]
+Sent Packet[25]
+
+===Timeout occurred===
+
+Resent Packet[23]
+Resent Packet[24]
+Resent Packet[25]
+
+Received ACK[23]
+Received ACK[24]
+Received ACK[25]
+
+Created Packet[26]
+	PacketType: 2
+	WindowSize: 0
+	AckNum: 6376
+
+Sent Packet[26]
+
+===Timeout occurred===
+
+Resent Packet[26]
+
+Received ACK[26]
+
+Created Packet[27]
+	PacketType: 2
+	WindowSize: 0
+	AckNum: 6631
+
+Sent Packet[27]
+
+Received ACK[27]
+END OF SERVICE
