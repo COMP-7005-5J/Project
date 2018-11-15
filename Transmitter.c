@@ -123,8 +123,6 @@ int main()
 		fprintf(stdout, "\n");
 		fprintf(logFile, "\n");
 		// Create the DATA packets
-		if (timeoutOccurred == 0)
-		{
 			for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
 			{
 				if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
@@ -133,7 +131,7 @@ int main()
 					packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
 					packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
 					if ((i == (SLIDING_WINDOW_SIZE - 1)) || ((BUFLEN - packets[i].WindowSize) > 0))
-						{
+					{
 						packets[i].PacketType = EOT;
 					}
 					else
@@ -141,9 +139,23 @@ int main()
 						packets[i].PacketType = DATA;
 					}
 					
-					fprintf(stdout, "Created Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
-					fprintf(logFile, "Created Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
-						
+					fprintf(stdout, "Created ");
+					fprintf(logFile, "Created ");
+					switch (packets[i].PacketType)
+					{
+						case (DATA):
+							fprintf(stdout, "DATA");
+							fprintf(logFile, "DATA");
+							break;
+						case (EOT):
+							fprintf(stdout, "EOT");
+							fprintf(logFile, "EOT");
+							break;
+						default:
+							break;
+					}
+					fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+					fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
 					// If the window size is less than BUFFER length, then we have the last bits of data
 					if (packets[i].WindowSize < BUFLEN)
 					{
@@ -167,7 +179,41 @@ int main()
 		
 			fprintf(stdout, "\n");
 			fprintf(logFile, "\n");
+		fprintf(stdout, "Window After Creating Packets { ");
+		fprintf(logFile, "Window After Creating Packets { ");
+		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+		{
+			if (packets[i].PacketType != UNINITIALISED)
+			{
+				switch (packets[i].PacketType)
+				{
+					case (DATA):
+						fprintf(stdout, "DATA");
+						fprintf(logFile, "DATA");
+						break;
+					case (EOT):
+						fprintf(stdout, "EOT");
+						fprintf(logFile, "EOT");
+						break;
+					default:
+						break;
+				}
+				fprintf(stdout, "[%d]", packets[i].SeqNum);
+				fprintf(logFile, "[%d]", packets[i].SeqNum);
+			}
+			else
+			{
+				fprintf(stdout, "-%d-", packets[i].SeqNum);
+				fprintf(logFile, "-%d-", packets[i].SeqNum);
+			}
+			if (i < (SLIDING_WINDOW_SIZE-1))
+			{
+				fprintf(stdout, ", ");
+				fprintf(logFile, ", ");
+			}
 		}
+		fprintf(stdout, " }\n");
+		fprintf(logFile, " }\n");
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
@@ -183,14 +229,30 @@ int main()
 				{
 					if (timeoutOccurred)
 					{
-						fprintf(stdout, "Resent Packet[%d]\n", packets[i].SeqNum);
-						fprintf(logFile, "Resent Packet[%d]\n", packets[i].SeqNum);
+						fprintf(stdout, "Resent ");
+						fprintf(logFile, "Resent ");
 					}
 					else
 					{
-						fprintf(stdout, "Sent Packet[%d]\n", packets[i].SeqNum);
-						fprintf(logFile, "Sent Packet[%d]\n", packets[i].SeqNum);
+						fprintf(stdout, "Sent ");
+						fprintf(logFile, "Sent ");
 					}
+					
+					switch (packets[i].PacketType)
+					{
+						case (DATA):
+							fprintf(stdout, "DATA");
+							fprintf(logFile, "DATA");
+							break;
+						case (EOT):
+							fprintf(stdout, "EOT");
+							fprintf(logFile, "EOT");
+							break;
+						default:
+							break;
+					}
+					fprintf(stdout, "[%d]\n", packets[i].SeqNum);
+					fprintf(logFile, "[%d]\n", packets[i].SeqNum);
 				}
 			}
 		}
@@ -208,10 +270,6 @@ int main()
 			if (recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len) < 0)
 			{
 				// Timeout occurred
-				if (onTheLastPacket)
-				{
-					onTheLastPacket = 0;
-				}
 				fprintf(stdout, "===Timeout occurred===\n");
 				fprintf(logFile, "===Timeout occurred===\n");
 				timeoutOccurred = 1;
@@ -237,6 +295,9 @@ int main()
 			}
 		}
 		
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
+		
 		// Check to see if there are packets that didn't receive an ACK
 		windowSlideDistance = SLIDING_WINDOW_SIZE;
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
@@ -255,21 +316,50 @@ int main()
 			{
 				if (packets[i].PacketType != UNINITIALISED)
 				{
-					packets[i-windowSlideDistance].PacketType = DATA;
 					packets[i-windowSlideDistance] = packets[i];
+					packets[i-windowSlideDistance].PacketType = DATA;
 					packets[i].PacketType = UNINITIALISED;
+					packets[i].SeqNum = packets[i].SeqNum + i;
 					memset(packets[i].data, 0, BUFLEN); // Reset buffer
 				}
 			}
 		}
 		
-		/*
+		fprintf(stdout, "Window After ACKs { ");
+		fprintf(logFile, "Window After ACKs { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
-			fprintf(stdout, "AFTER SLIDE: Packet[%d].PacketType = %d\n", packets[i].SeqNum, packets[i].PacketType);
-			fprintf(logFile, "AFTER SLIDE: Packet[%d].PacketType = %d\n", packets[i].SeqNum, packets[i].PacketType);
+			if (packets[i].PacketType != UNINITIALISED)
+			{
+				switch (packets[i].PacketType)
+				{
+					case (DATA):
+						fprintf(stdout, "DATA");
+						fprintf(logFile, "DATA");
+						break;
+					case (EOT):
+						fprintf(stdout, "EOT");
+						fprintf(logFile, "EOT");
+						break;
+					default:
+						break;
+				}
+				fprintf(stdout, "[%d]", packets[i].SeqNum);
+				fprintf(logFile, "[%d]", packets[i].SeqNum);
+			}
+			else
+			{
+				fprintf(stdout, "-%d-", packets[i].SeqNum);
+				fprintf(logFile, "-%d-", packets[i].SeqNum);
+			}
+			if (i < (SLIDING_WINDOW_SIZE-1))
+			{
+				fprintf(stdout, ", ");
+				fprintf(logFile, ", ");
+			}
 		}
-		*/
+		fprintf(stdout, " }\n");
+		fprintf(logFile, " }\n");
 		
 		// If we're in the last phase...
 		if (onTheLastPacket)

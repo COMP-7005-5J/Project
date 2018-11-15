@@ -115,117 +115,109 @@ Dropped EOT[16]
 
 Waiting for DATA...
 DATA[14] >>> 127.0.0.1:8002
-EOT[16] >>> 127.0.0.1:8002
+DATA[16] >>> 127.0.0.1:8002
+EOT[17] >>> 127.0.0.1:8002
 
 Waiting for ACKs...
-127.0.0.1:8080 <<< ACK[14]
-Dropped EOT[16]
+Dropped ACK[14]
+127.0.0.1:8080 <<< ACK[16]
+127.0.0.1:8080 <<< EOT[17]
 
 Waiting for DATA...
-EOT[16] >>> 127.0.0.1:8002
+Dropped EOT[14]
 
 Waiting for ACKs...
-127.0.0.1:8080 <<< EOT[16]
+===Timeout occurred===
 
 Waiting for DATA...
-Dropped DATA[17]
+Dropped EOT[14]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+EOT[14] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[14]
+
+Waiting for DATA...
 Dropped DATA[18]
-DATA[19] >>> 127.0.0.1:8002
-EOT[20] >>> 127.0.0.1:8002
-
-Waiting for ACKs...
-Dropped ACK[19]
-Dropped EOT[20]
-
-Waiting for DATA...
-DATA[17] >>> 127.0.0.1:8002
-DATA[18] >>> 127.0.0.1:8002
 Dropped DATA[19]
-EOT[20] >>> 127.0.0.1:8002
-
-Waiting for ACKs...
-127.0.0.1:8080 <<< ACK[17]
-127.0.0.1:8080 <<< ACK[18]
-127.0.0.1:8080 <<< EOT[20]
-
-Waiting for DATA...
-DATA[19] >>> 127.0.0.1:8002
-Dropped DATA[21]
-EOT[22] >>> 127.0.0.1:8002
-
-Waiting for ACKs...
-Dropped ACK[19]
-127.0.0.1:8080 <<< EOT[22]
-
-Waiting for DATA...
-DATA[19] >>> 127.0.0.1:8002
-Dropped EOT[21]
-
-Waiting for ACKs...
-===Timeout occurred===
-
-Waiting for DATA...
-DATA[19] >>> 127.0.0.1:8002
-Dropped EOT[21]
-
-Waiting for ACKs...
-===Timeout occurred===
-
-Waiting for DATA...
-DATA[19] >>> 127.0.0.1:8002
+DATA[20] >>> 127.0.0.1:8002
 EOT[21] >>> 127.0.0.1:8002
 
 Waiting for ACKs...
-Dropped ACK[19]
-Dropped ACK[19]
-127.0.0.1:8080 <<< ACK[19]
-Dropped EOT[21]
-
-Waiting for DATA...
-Dropped EOT[21]
-
-Waiting for ACKs...
-===Timeout occurred===
-
-Waiting for DATA...
-EOT[21] >>> 127.0.0.1:8002
-
-Waiting for ACKs...
+Dropped ACK[20]
 127.0.0.1:8080 <<< EOT[21]
 
 Waiting for DATA...
-DATA[23] >>> 127.0.0.1:8002
-Dropped DATA[24]
-Dropped EOT[25]
+DATA[18] >>> 127.0.0.1:8002
+DATA[19] >>> 127.0.0.1:8002
+EOT[20] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[18]
+Dropped ACK[19]
+127.0.0.1:8080 <<< EOT[20]
+
+Waiting for DATA...
+Dropped DATA[19]
+EOT[22] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[22]
+
+Waiting for DATA...
+Dropped EOT[19]
 
 Waiting for ACKs...
 ===Timeout occurred===
 
 Waiting for DATA...
-DATA[23] >>> 127.0.0.1:8002
+EOT[19] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped EOT[19]
+
+Waiting for DATA...
+EOT[19] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[19]
+
+Waiting for DATA...
+Dropped DATA[23]
+Dropped DATA[24]
+EOT[25] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped EOT[25]
+
+Waiting for DATA...
+Dropped DATA[23]
 DATA[24] >>> 127.0.0.1:8002
 EOT[25] >>> 127.0.0.1:8002
 
 Waiting for ACKs...
-Dropped ACK[23]
-127.0.0.1:8080 <<< ACK[23]
 127.0.0.1:8080 <<< ACK[24]
+Dropped EOT[25]
+
+Waiting for DATA...
+Dropped DATA[23]
+EOT[25] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
 127.0.0.1:8080 <<< EOT[25]
 
 Waiting for DATA...
-Dropped EOT[26]
+EOT[23] >>> 127.0.0.1:8002
 
 Waiting for ACKs...
-===Timeout occurred===
+Dropped EOT[23]
 
 Waiting for DATA...
-EOT[26] >>> 127.0.0.1:8002
+EOT[23] >>> 127.0.0.1:8002
 
 Waiting for ACKs...
-127.0.0.1:8080 <<< EOT[26]
-
-Waiting for DATA...
-EOT[27] >>> 127.0.0.1:8002
-
-Waiting for ACKs...
-127.0.0.1:8080 <<< EOT[27]
+127.0.0.1:8080 <<< EOT[23]
