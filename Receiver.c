@@ -88,10 +88,12 @@ int main()
 	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
-	destFile = fopen("./2.txt", "w+");
 	
+	destFile = fopen("./2.txt", "w+");
+	fclose(destFile);
 	while (1)
 	{
+		destFile = fopen("./2.txt", "r+");
 		while (eotRecvd == 0)
 		{
 			/*
@@ -142,9 +144,14 @@ int main()
 						buffer = realloc(buffer, recvPacket.AckNum * sizeof(*buffer));
 						fseek(destFile, (recvPacket.AckNum-1), SEEK_SET);
 						fputc('\0', destFile);
+						fseek(destFile, 0L, SEEK_END);
+						fprintf(stdout, "File size: %ld\n", ftell(destFile));
 					}
 					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize), SEEK_SET);
-					fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile);
+					if (fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile) < BUFLEN)
+					{
+						//fprintf(stdout, "XXX\n");
+					}
 				}
 				else
 				{
@@ -181,6 +188,7 @@ int main()
 		eotRecvd = 0;
 		free(pktsToAck);
 		pktsToAck = malloc(1 * sizeof(*pktsToAck));
+		fclose(destFile);
 	}
 	free(pktsToAck);
 	fclose(configFile);

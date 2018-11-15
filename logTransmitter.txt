@@ -34,29 +34,26 @@ Received ACK[2]
 Received ACK[3]
 Received ACK[4]
 
+
+Sent Packet[1]
+
+===Timeout occurred===
+
+
+Sent Packet[1]
+
+===Timeout occurred===
+
+
+Sent Packet[1]
+
+Received ACK[1]
+
 Packet[5]
 	PacketType: 2
 	WindowSize: 8
 	AckNum: 1029
 
-Sent Packet[1]
 Sent Packet[5]
 
-=============
-Timeout occurred
-
-
-Sent Packet[1]
-Sent Packet[5]
-
-Received ACK[1]
 Received ACK[5]
-
-Packet[6]
-	PacketType: 2
-	WindowSize: 0
-	AckNum: 1276
-
-Sent Packet[6]
-
-Received ACK[6]

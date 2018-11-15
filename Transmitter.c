@@ -11,7 +11,7 @@
 
 #define BUFLEN 255
 #define SLIDING_WINDOW_SIZE 4
-#define UNINITIALISED 0 // when the packet is uninitialised
+#define UNINITIALISED 0
 #define DATA 1
 #define EOT 2
 #define ACK 3
@@ -37,6 +37,7 @@ int main()
 	int seqNum = 1;
 	int timeoutOccurred = 0;
 	int onTheLastPacket = 0;
+	int windowSlideDistance = SLIDING_WINDOW_SIZE;
 	struct timeval timeout = { .tv_sec = 15, .tv_usec = 0};
 	int transmitterSocket;
 	socklen_t len;
@@ -117,11 +118,10 @@ int main()
 		// Create the DATA packets
 		if (timeoutOccurred == 0)
 		{
-			for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+			for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
 			{
 				if ((packets[i].PacketType == UNINITIALISED) && (onTheLastPacket == 0))
 				{
-					//packets[i].PacketType = DATA;
 					packets[i].SeqNum = seqNum;
 					packets[i].WindowSize = fread(packets[i].data, sizeof(char), BUFLEN, fileToSend);
 					packets[i].AckNum = (packets[i].SeqNum * BUFLEN) - (BUFLEN - packets[i].WindowSize) + 1;
@@ -145,6 +145,16 @@ int main()
 						break;
 					}
 					seqNum++;
+				}
+			}
+			
+			// In the event that a former packet[0] needs to be resent, we need to manually make it type EOT
+			for (int i = (SLIDING_WINDOW_SIZE-1); i >= 0; i--)
+			{
+				if (packets[i].PacketType != UNINITIALISED)
+				{
+					packets[i].PacketType = EOT;
+					break;
 				}
 			}
 		}
@@ -195,8 +205,8 @@ int main()
 				{
 					onTheLastPacket = 0;
 				}
-				fprintf(stdout, "=============\nTimeout occurred\n");
-				fprintf(logFile, "=============\nTimeout occurred\n");
+				fprintf(stdout, "===Timeout occurred===\n");
+				fprintf(logFile, "===Timeout occurred===\n");
 				timeoutOccurred = 1;
 				break;
 			}
@@ -216,6 +226,31 @@ int main()
 						fprintf(stdout, "Received ACK[%d]\n", recvPacket.AckNum);
 						fprintf(logFile, "Received ACK[%d]\n", recvPacket.AckNum);
 					}
+				}
+			}
+		}
+		
+		// Check to see if there are packets that didn't receive an ACK
+		windowSlideDistance = SLIDING_WINDOW_SIZE;
+		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+		{
+			if (packets[i].PacketType != UNINITIALISED)
+			{
+				windowSlideDistance = i;
+			}
+		}
+		
+		// Shift packets that weren't ACK'd to the left
+		if ((windowSlideDistance > 0) && (windowSlideDistance < SLIDING_WINDOW_SIZE))
+		{
+			for (int i = windowSlideDistance; i < SLIDING_WINDOW_SIZE; i++)
+			{
+				if (packets[i].PacketType != UNINITIALISED)
+				{
+					packets[i-windowSlideDistance].PacketType = DATA;
+					packets[i-windowSlideDistance] = packets[i];
+					packets[i].PacketType = UNINITIALISED;
+					memset(packets[i].data, 0, BUFLEN); // Reset buffer
 				}
 			}
 		}

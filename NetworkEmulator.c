@@ -41,7 +41,14 @@ void forward(struct packet pkt)
 			break;
 		case (EOT):
 			strcpy(type, "EOT");
-			repNum = pkt.SeqNum;
+			if (directionToRec)
+			{
+				repNum = pkt.SeqNum;
+			}
+			else
+			{
+				repNum = pkt.AckNum;
+			}
 			break;
 		default:
 			strcpy(type, "ACK");
@@ -201,8 +208,8 @@ int main()
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
 			{
 				// Timeout occurred
-				fprintf(stdout, "=============\nTimeout occurred\n\n");
-				fprintf(logFile, "=============\nTimeout occurred\n\n");
+				fprintf(stdout, "===Timeout occurred===\n");
+				fprintf(logFile, "===Timeout occurred===\n");
 				break;
 			}
 			else
