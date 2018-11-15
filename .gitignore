@@ -1,5 +1,1 @@
-/1.txt
-/2.txt
-/logEmulator.txt
-/logReceiver.txt
-/logTransmitter.txt
+*.txt
