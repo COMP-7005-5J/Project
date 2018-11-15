@@ -28,13 +28,9 @@ Created Packet[4]
 	WindowSize: 255
 	AckNum: 1021
 
-Packet[1].PacketType = 1
 Sent Packet[1]
-Packet[2].PacketType = 1
 Sent Packet[2]
-Packet[3].PacketType = 1
 Sent Packet[3]
-Packet[4].PacketType = 2
 Sent Packet[4]
 
 Received ACK[2]
@@ -42,27 +38,15 @@ Received ACK[3]
 Received ACK[4]
 
 
-Packet[1].PacketType = 2
 Sent Packet[1]
-Packet[2].PacketType = 0
-Packet[3].PacketType = 0
-Packet[4].PacketType = 0
 
 ===Timeout occurred===
 
-Packet[1].PacketType = 2
 Resent Packet[1]
-Packet[2].PacketType = 0
-Packet[3].PacketType = 0
-Packet[4].PacketType = 0
 
 ===Timeout occurred===
 
-Packet[1].PacketType = 2
 Resent Packet[1]
-Packet[2].PacketType = 0
-Packet[3].PacketType = 0
-Packet[4].PacketType = 0
 
 Received ACK[1]
 
@@ -83,35 +67,23 @@ Created Packet[8]
 	WindowSize: 255
 	AckNum: 2041
 
-Packet[5].PacketType = 1
 Sent Packet[5]
-Packet[6].PacketType = 1
 Sent Packet[6]
-Packet[7].PacketType = 1
 Sent Packet[7]
-Packet[8].PacketType = 2
 Sent Packet[8]
 
 ===Timeout occurred===
 
-Packet[5].PacketType = 1
 Resent Packet[5]
-Packet[6].PacketType = 1
 Resent Packet[6]
-Packet[7].PacketType = 1
 Resent Packet[7]
-Packet[8].PacketType = 2
 Resent Packet[8]
 
 ===Timeout occurred===
 
-Packet[5].PacketType = 1
 Resent Packet[5]
-Packet[6].PacketType = 1
 Resent Packet[6]
-Packet[7].PacketType = 1
 Resent Packet[7]
-Packet[8].PacketType = 2
 Resent Packet[8]
 
 Received ACK[5]
@@ -139,34 +111,22 @@ Created Packet[12]
 	WindowSize: 255
 	AckNum: 3061
 
-Packet[9].PacketType = 1
 Sent Packet[9]
-Packet[10].PacketType = 1
 Sent Packet[10]
-Packet[11].PacketType = 1
 Sent Packet[11]
-Packet[12].PacketType = 2
 Sent Packet[12]
 
 Received ACK[10]
 Received ACK[12]
 
 
-Packet[9].PacketType = 1
 Sent Packet[9]
-Packet[10].PacketType = 0
-Packet[11].PacketType = 2
 Sent Packet[11]
-Packet[12].PacketType = 0
 
 ===Timeout occurred===
 
-Packet[9].PacketType = 1
 Resent Packet[9]
-Packet[10].PacketType = 0
-Packet[11].PacketType = 2
 Resent Packet[11]
-Packet[12].PacketType = 0
 
 Received ACK[9]
 Received ACK[9]
@@ -189,35 +149,23 @@ Created Packet[16]
 	WindowSize: 255
 	AckNum: 4081
 
-Packet[13].PacketType = 1
 Sent Packet[13]
-Packet[14].PacketType = 1
 Sent Packet[14]
-Packet[15].PacketType = 1
 Sent Packet[15]
-Packet[16].PacketType = 2
 Sent Packet[16]
 
 Received ACK[13]
 Received ACK[15]
 ===Timeout occurred===
 
-Packet[14].PacketType = 1
 Resent Packet[14]
-Packet[14].PacketType = 0
-Packet[16].PacketType = 2
 Resent Packet[16]
-Packet[16].PacketType = 0
 
 Received ACK[14]
 Received ACK[14]
 ===Timeout occurred===
 
-Packet[16].PacketType = 2
 Resent Packet[16]
-Packet[14].PacketType = 0
-Packet[16].PacketType = 0
-Packet[16].PacketType = 0
 
 Received ACK[16]
 Received ACK[16]
@@ -240,24 +188,16 @@ Created Packet[20]
 	WindowSize: 255
 	AckNum: 5101
 
-Packet[17].PacketType = 1
 Sent Packet[17]
-Packet[18].PacketType = 1
 Sent Packet[18]
-Packet[19].PacketType = 1
 Sent Packet[19]
-Packet[20].PacketType = 2
 Sent Packet[20]
 
 ===Timeout occurred===
 
-Packet[17].PacketType = 1
 Resent Packet[17]
-Packet[18].PacketType = 1
 Resent Packet[18]
-Packet[19].PacketType = 1
 Resent Packet[19]
-Packet[20].PacketType = 2
 Resent Packet[20]
 
 Received ACK[17]
@@ -273,128 +213,14 @@ Created Packet[22]
 	WindowSize: 255
 	AckNum: 5611
 
-Packet[19].PacketType = 1
 Sent Packet[19]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 1
 Sent Packet[21]
-Packet[22].PacketType = 2
 Sent Packet[22]
 
 Received ACK[22]
 
 
-Packet[19].PacketType = 1
 Sent Packet[19]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 2
 Sent Packet[21]
-Packet[22].PacketType = 0
 
 ===Timeout occurred===
-
-Packet[19].PacketType = 1
-Resent Packet[19]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 2
-Resent Packet[21]
-Packet[22].PacketType = 0
-
-===Timeout occurred===
-
-Packet[19].PacketType = 1
-Resent Packet[19]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 2
-Resent Packet[21]
-Packet[22].PacketType = 0
-
-Received ACK[19]
-===Timeout occurred===
-
-Packet[21].PacketType = 2
-Resent Packet[21]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 0
-Packet[22].PacketType = 0
-
-===Timeout occurred===
-
-Packet[21].PacketType = 2
-Resent Packet[21]
-Packet[18].PacketType = 0
-Packet[21].PacketType = 0
-Packet[22].PacketType = 0
-
-Received ACK[21]
-Received ACK[21]
-
-Created Packet[23]
-	PacketType: 1
-	WindowSize: 255
-	AckNum: 5866
-Created Packet[24]
-	PacketType: 1
-	WindowSize: 255
-	AckNum: 6121
-Created Packet[25]
-	PacketType: 2
-	WindowSize: 202
-	AckNum: 6323
-
-Packet[23].PacketType = 1
-Sent Packet[23]
-Packet[24].PacketType = 1
-Sent Packet[24]
-Packet[25].PacketType = 2
-Sent Packet[25]
-Packet[22].PacketType = 0
-
-===Timeout occurred===
-
-Packet[23].PacketType = 1
-Resent Packet[23]
-Packet[24].PacketType = 1
-Resent Packet[24]
-Packet[25].PacketType = 2
-Resent Packet[25]
-Packet[22].PacketType = 0
-
-Received ACK[23]
-Received ACK[24]
-Received ACK[25]
-
-Created Packet[26]
-	PacketType: 2
-	WindowSize: 0
-	AckNum: 6376
-
-Packet[26].PacketType = 2
-Sent Packet[26]
-Packet[24].PacketType = 0
-Packet[25].PacketType = 0
-Packet[22].PacketType = 0
-
-===Timeout occurred===
-
-Packet[26].PacketType = 2
-Resent Packet[26]
-Packet[24].PacketType = 0
-Packet[25].PacketType = 0
-Packet[22].PacketType = 0
-
-Received ACK[26]
-
-Created Packet[27]
-	PacketType: 2
-	WindowSize: 0
-	AckNum: 6631
-
-Packet[27].PacketType = 2
-Sent Packet[27]
-Packet[24].PacketType = 0
-Packet[25].PacketType = 0
-Packet[22].PacketType = 0
-
-Received ACK[27]
-END OF SERVICE

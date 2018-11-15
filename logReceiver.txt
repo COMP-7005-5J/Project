@@ -97,35 +97,3 @@ Received EOT[22]
 Sent ACK[19]
 Sent ACK[22]
 
-Received DATA[19]
-Received DATA[19]
-Received DATA[19]
-Received EOT[21]
-
-Sent ACK[19]
-Sent ACK[19]
-Sent ACK[19]
-Sent ACK[21]
-
-Received EOT[21]
-
-Sent ACK[21]
-
-Received DATA[23]
-Received DATA[23]
-Received DATA[24]
-Received EOT[25]
-
-Sent ACK[23]
-Sent ACK[23]
-Sent ACK[24]
-Sent ACK[25]
-
-Received EOT[26]
-
-Sent ACK[26]
-
-Received EOT[27]
-
-Sent ACK[27]
-
