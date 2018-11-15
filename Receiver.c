@@ -12,6 +12,7 @@
 #define EOT 2
 #define ACK 3
 
+FILE *logFile;
 struct packet
 {
 	int PacketType;
@@ -27,7 +28,7 @@ int main()
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *destFile;
-	FILE *logFile = fopen("./logReceiver.txt", "w");
+	logFile = fopen("./logReceiver.txt", "w+");
 	int recvSocket;
 	int duplicatePktRecvd = 0;
 	int eotRecvd = 0;
@@ -88,21 +89,17 @@ int main()
 	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
-	
+	fprintf(stdout, "STARTING SERVICE\n\n");
+	fprintf(logFile, "STARTING SERVICE\n\n");
 	destFile = fopen("./2.txt", "w+");
 	fclose(destFile);
+	fclose(logFile);
 	while (1)
 	{
+		logFile = fopen("./logReceiver.txt", "a");
 		destFile = fopen("./2.txt", "r+");
 		while (eotRecvd == 0)
 		{
-			/*
-			fseek(destFile, 0L, SEEK_END);
-			fileSize = (int) ftell(destFile);
-			fseek(destFile, 0L, SEEK_SET);
-			fread(buffer, fileSize, sizeof(char), destFile);
-			*/
-		
 			// Receive packets
 			if (recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) > 0)
 			{
@@ -144,14 +141,9 @@ int main()
 						buffer = realloc(buffer, recvPacket.AckNum * sizeof(*buffer));
 						fseek(destFile, (recvPacket.AckNum-1), SEEK_SET);
 						fputc('\0', destFile);
-						fseek(destFile, 0L, SEEK_END);
-						fprintf(stdout, "File size: %ld\n", ftell(destFile));
 					}
 					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize), SEEK_SET);
-					if (fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile) < BUFLEN)
-					{
-						//fprintf(stdout, "XXX\n");
-					}
+					fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile);
 				}
 				else
 				{
@@ -166,6 +158,7 @@ int main()
 		}
 		
 		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		
 		// Send ACKs for each packet received
 		for (int i = 0; i < numOfPktsRecvd; i++)
@@ -183,12 +176,15 @@ int main()
 		}
 		
 		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
+		
 		// Reset variables
 		numOfPktsRecvd = 0;
 		eotRecvd = 0;
 		free(pktsToAck);
 		pktsToAck = malloc(1 * sizeof(*pktsToAck));
 		fclose(destFile);
+		fclose(logFile);
 	}
 	free(pktsToAck);
 	fclose(configFile);

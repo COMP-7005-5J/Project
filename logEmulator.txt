@@ -9,28 +9,223 @@ Created destination server
 	Port: 8002
 BER: 25
 Avg Delay: 5
+STARTING SERVICE
+
+
+Waiting for DATA...
 Dropped DATA[1]
 DATA[2] >>> 127.0.0.1:8002
 DATA[3] >>> 127.0.0.1:8002
 EOT[4] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
 127.0.0.1:8080 <<< ACK[2]
 127.0.0.1:8080 <<< ACK[3]
 127.0.0.1:8080 <<< EOT[4]
+
 Waiting for DATA...
-Waiting for ACKs...
 EOT[1] >>> 127.0.0.1:8002
-Dropped EOT[1]
-Waiting for DATA...
+
 Waiting for ACKs...
 Dropped EOT[1]
+
 Waiting for DATA...
+Dropped EOT[1]
+
 Waiting for ACKs...
 ===Timeout occurred===
+
+Waiting for DATA...
 EOT[1] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
 127.0.0.1:8080 <<< EOT[1]
+
 Waiting for DATA...
+DATA[5] >>> 127.0.0.1:8002
+DATA[6] >>> 127.0.0.1:8002
+DATA[7] >>> 127.0.0.1:8002
+Dropped EOT[8]
+
 Waiting for ACKs...
-EOT[5] >>> 127.0.0.1:8002
-127.0.0.1:8080 <<< EOT[5]
+===Timeout occurred===
+
 Waiting for DATA...
+DATA[5] >>> 127.0.0.1:8002
+DATA[6] >>> 127.0.0.1:8002
+DATA[7] >>> 127.0.0.1:8002
+Dropped EOT[8]
+
 Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+Dropped DATA[5]
+DATA[6] >>> 127.0.0.1:8002
+Dropped DATA[7]
+EOT[8] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[5]
+127.0.0.1:8080 <<< ACK[6]
+127.0.0.1:8080 <<< ACK[7]
+127.0.0.1:8080 <<< ACK[5]
+Dropped ACK[6]
+127.0.0.1:8080 <<< ACK[7]
+127.0.0.1:8080 <<< ACK[6]
+127.0.0.1:8080 <<< EOT[8]
+
+Waiting for DATA...
+Dropped DATA[9]
+DATA[10] >>> 127.0.0.1:8002
+Dropped DATA[11]
+EOT[12] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[10]
+127.0.0.1:8080 <<< EOT[12]
+
+Waiting for DATA...
+DATA[9] >>> 127.0.0.1:8002
+Dropped EOT[11]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+DATA[9] >>> 127.0.0.1:8002
+EOT[11] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[9]
+127.0.0.1:8080 <<< ACK[9]
+127.0.0.1:8080 <<< EOT[11]
+
+Waiting for DATA...
+DATA[13] >>> 127.0.0.1:8002
+DATA[14] >>> 127.0.0.1:8002
+DATA[15] >>> 127.0.0.1:8002
+EOT[16] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[13]
+Dropped ACK[14]
+127.0.0.1:8080 <<< ACK[15]
+Dropped EOT[16]
+
+Waiting for DATA...
+DATA[14] >>> 127.0.0.1:8002
+EOT[16] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[14]
+Dropped EOT[16]
+
+Waiting for DATA...
+EOT[16] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[16]
+
+Waiting for DATA...
+Dropped DATA[17]
+Dropped DATA[18]
+DATA[19] >>> 127.0.0.1:8002
+EOT[20] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[19]
+Dropped EOT[20]
+
+Waiting for DATA...
+DATA[17] >>> 127.0.0.1:8002
+DATA[18] >>> 127.0.0.1:8002
+Dropped DATA[19]
+EOT[20] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< ACK[17]
+127.0.0.1:8080 <<< ACK[18]
+127.0.0.1:8080 <<< EOT[20]
+
+Waiting for DATA...
+DATA[19] >>> 127.0.0.1:8002
+Dropped DATA[21]
+EOT[22] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[19]
+127.0.0.1:8080 <<< EOT[22]
+
+Waiting for DATA...
+DATA[19] >>> 127.0.0.1:8002
+Dropped EOT[21]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+DATA[19] >>> 127.0.0.1:8002
+Dropped EOT[21]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+DATA[19] >>> 127.0.0.1:8002
+EOT[21] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[19]
+Dropped ACK[19]
+127.0.0.1:8080 <<< ACK[19]
+Dropped EOT[21]
+
+Waiting for DATA...
+Dropped EOT[21]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+EOT[21] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[21]
+
+Waiting for DATA...
+DATA[23] >>> 127.0.0.1:8002
+Dropped DATA[24]
+Dropped EOT[25]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+DATA[23] >>> 127.0.0.1:8002
+DATA[24] >>> 127.0.0.1:8002
+EOT[25] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+Dropped ACK[23]
+127.0.0.1:8080 <<< ACK[23]
+127.0.0.1:8080 <<< ACK[24]
+127.0.0.1:8080 <<< EOT[25]
+
+Waiting for DATA...
+Dropped EOT[26]
+
+Waiting for ACKs...
+===Timeout occurred===
+
+Waiting for DATA...
+EOT[26] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[26]
+
+Waiting for DATA...
+EOT[27] >>> 127.0.0.1:8002
+
+Waiting for ACKs...
+127.0.0.1:8080 <<< EOT[27]

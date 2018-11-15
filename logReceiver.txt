@@ -1,0 +1,131 @@
+Loaded configurations
+Created socket
+Created receiver's server
+	Address: 127.0.0.1
+	Port: 8002
+Binded socket
+Created destination server
+	Address: 127.0.0.1
+	Port: 8001
+STARTING SERVICE
+
+Received DATA[2]
+Received DATA[3]
+Received EOT[4]
+
+Sent ACK[2]
+Sent ACK[3]
+Sent ACK[4]
+
+Received EOT[1]
+
+Sent ACK[1]
+
+Received EOT[1]
+
+Sent ACK[1]
+
+Received DATA[5]
+Received DATA[6]
+Received DATA[7]
+Received DATA[5]
+Received DATA[6]
+Received DATA[7]
+Received DATA[6]
+Received EOT[8]
+
+Sent ACK[5]
+Sent ACK[6]
+Sent ACK[7]
+Sent ACK[5]
+Sent ACK[6]
+Sent ACK[7]
+Sent ACK[6]
+Sent ACK[8]
+
+Received DATA[10]
+Received EOT[12]
+
+Sent ACK[10]
+Sent ACK[12]
+
+Received DATA[9]
+Received DATA[9]
+Received EOT[11]
+
+Sent ACK[9]
+Sent ACK[9]
+Sent ACK[11]
+
+Received DATA[13]
+Received DATA[14]
+Received DATA[15]
+Received EOT[16]
+
+Sent ACK[13]
+Sent ACK[14]
+Sent ACK[15]
+Sent ACK[16]
+
+Received DATA[14]
+Received EOT[16]
+
+Sent ACK[14]
+Sent ACK[16]
+
+Received EOT[16]
+
+Sent ACK[16]
+
+Received DATA[19]
+Received EOT[20]
+
+Sent ACK[19]
+Sent ACK[20]
+
+Received DATA[17]
+Received DATA[18]
+Received EOT[20]
+
+Sent ACK[17]
+Sent ACK[18]
+Sent ACK[20]
+
+Received DATA[19]
+Received EOT[22]
+
+Sent ACK[19]
+Sent ACK[22]
+
+Received DATA[19]
+Received DATA[19]
+Received DATA[19]
+Received EOT[21]
+
+Sent ACK[19]
+Sent ACK[19]
+Sent ACK[19]
+Sent ACK[21]
+
+Received EOT[21]
+
+Sent ACK[21]
+
+Received DATA[23]
+Received DATA[23]
+Received DATA[24]
+Received EOT[25]
+
+Sent ACK[23]
+Sent ACK[23]
+Sent ACK[24]
+Sent ACK[25]
+
+Received EOT[26]
+
+Sent ACK[26]
+
+Received EOT[27]
+
+Sent ACK[27]
+

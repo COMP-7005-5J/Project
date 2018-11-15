@@ -16,6 +16,7 @@
 #define EOT 2
 #define ACK 3
 
+FILE *logFile;
 struct packet
 {
 	int PacketType;
@@ -30,7 +31,7 @@ int main()
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
-	FILE *logFile = fopen("./logTransmitter.txt", "w");
+	logFile = fopen("./logTransmitter.txt", "w+");
 	FILE *fileToSend;
 	int allPacketsAckd = 1;
 	int eotRecvd = 0;
@@ -112,9 +113,15 @@ int main()
 	
 	len = sizeof(netEmuSvr);
 	
+	fprintf(stdout, "STARTING SERVICE\n\n");
+	fprintf(logFile, "STARTING SERVICE\n\n");
+	fclose(logFile);
 	// Loop forever until there’s nothing else to do
 	while (1)
 	{
+		logFile = fopen("./logTransmitter.txt", "a");
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		// Create the DATA packets
 		if (timeoutOccurred == 0)
 		{
@@ -134,8 +141,8 @@ int main()
 						packets[i].PacketType = DATA;
 					}
 					
-					fprintf(stdout, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
-					fprintf(logFile, "Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+					fprintf(stdout, "Created Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
+					fprintf(logFile, "Created Packet[%d]\n\tPacketType: %d\n\tWindowSize: %d\n\tAckNum: %d\n", packets[i].SeqNum, packets[i].PacketType, packets[i].WindowSize, packets[i].AckNum);
 						
 					// If the window size is less than BUFFER length, then we have the last bits of data
 					if (packets[i].WindowSize < BUFLEN)
@@ -157,40 +164,40 @@ int main()
 					break;
 				}
 			}
-		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+			fprintf(stdout, "\n");
+			fprintf(logFile, "\n");
+		}
 
 		// Send the packets
-		do
+		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
-			timeoutOccurred = 0;
-			for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+			if (packets[i].PacketType != UNINITIALISED)
 			{
-				if (packets[i].PacketType != UNINITIALISED)
+				if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 				{
-					if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
+					fprintf(stdout, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+					fprintf(logFile, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+				}
+				else
+				{
+					if (timeoutOccurred)
 					{
-						fprintf(stdout, "ERROR: Couldn't send packets. %s\n", strerror(errno));
-						fprintf(logFile, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+						fprintf(stdout, "Resent Packet[%d]\n", packets[i].SeqNum);
+						fprintf(logFile, "Resent Packet[%d]\n", packets[i].SeqNum);
 					}
 					else
 					{
-						if (timeoutOccurred)
-						{
-							fprintf(stdout, "Resent Packet[%d]\n", packets[i].SeqNum);
-							fprintf(logFile, "Resent Packet[%d]\n", packets[i].SeqNum);
-						}
-						else
-						{
-							fprintf(stdout, "Sent Packet[%d]\n", packets[i].SeqNum);
-							fprintf(logFile, "Sent Packet[%d]\n", packets[i].SeqNum);
-						}
+						fprintf(stdout, "Sent Packet[%d]\n", packets[i].SeqNum);
+						fprintf(logFile, "Sent Packet[%d]\n", packets[i].SeqNum);
 					}
 				}
 			}
-		} while(timeoutOccurred == 1);
+		}
+		if (timeoutOccurred)
+		{
+			timeoutOccurred = 0;
+		}
 		
 		fprintf(stdout, "\n");
 		fprintf(logFile, "\n");
@@ -237,6 +244,7 @@ int main()
 			if (packets[i].PacketType != UNINITIALISED)
 			{
 				windowSlideDistance = i;
+				break;
 			}
 		}
 		
@@ -255,6 +263,14 @@ int main()
 			}
 		}
 		
+		/*
+		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+		{
+			fprintf(stdout, "AFTER SLIDE: Packet[%d].PacketType = %d\n", packets[i].SeqNum, packets[i].PacketType);
+			fprintf(logFile, "AFTER SLIDE: Packet[%d].PacketType = %d\n", packets[i].SeqNum, packets[i].PacketType);
+		}
+		*/
+		
 		// If we're in the last phase...
 		if (onTheLastPacket)
 		{
@@ -271,15 +287,15 @@ int main()
 			
 			if (allPacketsAckd)
 			{
+				fprintf(stdout, "END OF SERVICE\n");
+				fprintf(logFile, "END OF SERVICE\n");
 				break;
 			}
 		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
-		
 		// Reset variables
 		eotRecvd = 0;
+		fclose(logFile);
 	}
 
 	close(transmitterSocket);

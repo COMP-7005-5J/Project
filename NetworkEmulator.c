@@ -13,6 +13,7 @@
 #define EOT 2
 #define ACK 3
 
+FILE *logFile;
 int bitErrorRate;
 int emulatorSocket;
 int directionToRec = 1;
@@ -29,8 +30,8 @@ struct packet
 
 void forward(struct packet pkt)
 {
-	FILE *logFile = fopen("./logEmulator.txt", "a");
-	char *type = malloc(4*sizeof(*type));
+	//FILE *logFile = fopen("./logEmulator.txt", "a");
+	char *type = malloc(4 * sizeof(*type));
 	int repNum;
 	
 	switch(pkt.PacketType)
@@ -83,7 +84,7 @@ void forward(struct packet pkt)
 		fprintf(logFile, "Dropped %s[%d]\n", type, repNum);
 	}
 	
-	fclose(logFile);
+	//fclose(logFile);
 	free(type);
 }
 
@@ -92,7 +93,7 @@ int main()
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
-	FILE *logFile = fopen("./logEmulator.txt", "w+");
+	logFile = fopen("./logEmulator.txt", "w+");
 	int avgDelay;
 	int eotRecvd = 0;
 	int eotSent = 0;
@@ -169,10 +170,14 @@ int main()
 	fprintf(stdout, "Avg Delay: %d\n", avgDelay);
 	fprintf(logFile, "Avg Delay: %d\n", avgDelay);
 	
+	fprintf(stdout, "STARTING SERVICE\n\n");
+	fprintf(logFile, "STARTING SERVICE\n\n");
 	fclose(logFile);
 	while (1)
 	{
 		logFile = fopen("./logEmulator.txt", "a");
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		fprintf(stdout, "Waiting for DATA...\n");
 		fprintf(logFile, "Waiting for DATA...\n");
 		while (eotRecvd == 0)
@@ -198,11 +203,12 @@ int main()
 				forward(pkt);
 			}
 		}
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
 		
 		DestSvr = &fromAddr;
 		pktsDelayed = 0;
 		directionToRec = 0;
-		fprintf(stdout, "\n");
 		
 		fprintf(stdout, "Waiting for ACKs...\n");
 		fprintf(logFile, "Waiting for ACKs...\n");
@@ -238,7 +244,6 @@ int main()
 		DestSvr = &recSvr;
 		pktsDelayed = 0;
 		directionToRec = 1;
-		printf("\n");
 		fclose(logFile);
 	}
 	fclose(configFile);
