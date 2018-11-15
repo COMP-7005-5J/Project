@@ -12,6 +12,7 @@
 #define EOT 2
 #define ACK 3
 
+FILE *logFile;
 struct packet
 {
 	int PacketType;
@@ -23,17 +24,15 @@ struct packet
 
 int main()
 {
-	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
 	FILE *destFile;
-	FILE *logFile = fopen("./logReceiver.txt", "w");
+	logFile = fopen("./logReceiver.txt", "w+");
 	int recvSocket;
+	int duplicatePktRecvd = 0;
 	int eotRecvd = 0;
-	int eotSent = 0;
 	int numOfPktsRecvd = 0;
 	struct packet *pktsToAck = malloc(1 * sizeof(*pktsToAck));
-	pthread_t thread;
 	socklen_t fromLen;
 	socklen_t len;
 	struct packet recvPacket;
@@ -88,37 +87,66 @@ int main()
 	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
 	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
-	int x = 0;
-	
+	fprintf(stdout, "STARTING SERVICE\n\n");
+	fprintf(logFile, "STARTING SERVICE\n\n");
+	destFile = fopen("./2.txt", "w+");
+	fclose(destFile);
+	fclose(logFile);
 	while (1)
 	{
+		logFile = fopen("./logReceiver.txt", "a");
+		destFile = fopen("./2.txt", "r+");
 		while (eotRecvd == 0)
 		{
 			// Receive packets
 			if (recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) > 0)
 			{
-				// Extent array to store another packet
-				++numOfPktsRecvd;
-				pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
-				if (recvPacket.PacketType == EOT)
+				// Check if the packet received is a duplicate
+				for (int i = 0; i < numOfPktsRecvd; i++)
 				{
-					eotRecvd = 1;
-					pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
+					if (recvPacket.SeqNum == pktsToAck[i].AckNum)
+					{
+						duplicatePktRecvd = 1;
+						break;
+					}
+				}
+				
+				// If the packet received isn't a duplicate, we add it to the list of packets to acknowledge
+				if (duplicatePktRecvd == 0)
+				{
+					// Extent array to store another packet
+					++numOfPktsRecvd;
+					pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
+					fprintf(stdout, "Received ");
+					fprintf(logFile, "Received ");
+					if (recvPacket.PacketType == EOT)
+					{
+						eotRecvd = 1;
+						pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
+						fprintf(stdout, "EOT");
+						fprintf(logFile, "EOT");
+					}
+					else
+					{
+						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
+						fprintf(stdout, "DATA");
+						fprintf(logFile, "DATA");
+					}
+					fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+					fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+				
+					// Put packet into array to keep track of what to ACK
+					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
+					pktsToAck[numOfPktsRecvd-1].AckNum = recvPacket.SeqNum;
+					
+					// Extend the file if the received data needs to be appended
+					fseek(destFile, (recvPacket.AckNum-recvPacket.WindowSize-1), SEEK_SET);					
+					fwrite(recvPacket.data, sizeof(char), recvPacket.WindowSize, destFile);
 				}
 				else
 				{
-					pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
+					duplicatePktRecvd = 0;
 				}
-				fprintf(stdout, "Received Packet[%d]\n", recvPacket.SeqNum);
-				fprintf(logFile, "Received Packet[%d]\n", recvPacket.SeqNum);
-				
-				// Put packet into array to keep track of what to ACK
-				pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
-				pktsToAck[numOfPktsRecvd-1].AckNum = recvPacket.SeqNum;
-				
-				destFile = fopen("./2.txt", "a");
-				fprintf(destFile, "%s", recvPacket.data);
-				fclose(destFile);
 			}
 			else
 			{
@@ -127,10 +155,13 @@ int main()
 			}
 		}
 		
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
+		
 		// Send ACKs for each packet received
 		for (int i = 0; i < numOfPktsRecvd; i++)
 		{
-			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, &netEmuSvr, sizeof(netEmuSvr)) < 0)
+			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 			{
 				fprintf(stdout, "Error: Couldn't send packet. %s\n", strerror(errno));
 				fprintf(logFile, "Error: Couldn't send packet. %s\n", strerror(errno));
@@ -142,11 +173,16 @@ int main()
 			}
 		}
 		
+		fprintf(stdout, "\n");
+		fprintf(logFile, "\n");
+		
 		// Reset variables
 		numOfPktsRecvd = 0;
 		eotRecvd = 0;
 		free(pktsToAck);
 		pktsToAck = malloc(1 * sizeof(*pktsToAck));
+		fclose(destFile);
+		fclose(logFile);
 	}
 	free(pktsToAck);
 	fclose(configFile);
