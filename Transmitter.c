@@ -8,6 +8,7 @@
 #include <arpa/inet.h> // ntoa()
 #include <errno.h> // errno
 #include <sys/time.h> // struct timeval
+#include <stdarg.h> // va_list, va_start, va_end
 
 #define BUFLEN 255
 #define SLIDING_WINDOW_SIZE 4
@@ -26,8 +27,35 @@ struct packet
 	int AckNum;
 };
 
-int main()
+void logMessage(char *format, ...)
 {
+	va_list ap;
+
+    va_start(ap, format);
+    vprintf(format, ap);
+    va_end(ap);
+
+    va_start(ap, format);
+    vfprintf(logFile, format, ap);
+    va_end(ap);
+}
+void logPacketType(int packetType)
+{
+	switch (packetType)
+	{
+		case (DATA):
+			logMessage("DATA");
+			break;
+		case (EOT):
+			logMessage("EOT");
+			break;
+		default:
+			break;
+	}
+}
+
+int main()
+{	
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6];
 	FILE *configFile = fopen("./config.txt", "r");
@@ -49,21 +77,18 @@ int main()
 
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
-	fprintf(stdout, "Loaded configurations\n");
-	fprintf(logFile, "Loaded configurations\n");
+	logMessage("Loaded configurations\n");
 
 	// Create socket
 	transmitterSocket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (transmitterSocket > 0)
 	{
 		setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-		fprintf(stdout, "Created socket\n");
-		fprintf(logFile, "Created socket\n");
+		logMessage("Created socket\n");
 	}
 	else
 	{
-		fprintf(stdout, "ERROR: Creating socket. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Creating socket. %s\n", strerror(errno));
+		logMessage("ERROR: Creating socket. %s\n", strerror(errno));
 		exit(0);
 	}
 	
@@ -73,55 +98,44 @@ int main()
 	transmitterSvr.sin_family = AF_INET;
 	transmitterSvr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	transmitterSvr.sin_port = htons(8080);
-	fprintf(stdout, "Created transmitter server\n");
-	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
-	fprintf(stdout, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
-	fprintf(logFile, "Created server\n");
-	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
-	fprintf(logFile, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
+	logMessage("Created transmitter server\n");
+	logMessage("\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
+	logMessage("\tPort: %d\n", ntohs(transmitterSvr.sin_port));
 	
 	// Bind socket
 	len = sizeof(transmitterSvr);
 	if (bind(transmitterSocket, (struct sockaddr *) &transmitterSvr, len) < 0)
 	{
-		fprintf(stdout, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		logMessage("ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
-	fprintf(stdout, "Binded socket\n");
-	fprintf(logFile, "Binded socket\n");
+	logMessage("Binded socket\n");
 
 	// Set up network emulator server
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	fprintf(stdout, "Created network emulator server\n");
-	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	fprintf(stdout, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
-	fprintf(logFile, "Created server\n");
-	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	logMessage("Created network emulator server\n");
+	logMessage("\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	logMessage("\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
 	// Open the file to send
 	fprintf(stdout, "Enter name of file\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	fileToSend = fopen(buffer, "r");
-	fprintf(stdout, "Opened file: %s\n", buffer);
-	fprintf(logFile, "Opened file: %s\n", buffer);
+	logMessage("Opened file: %s\n", buffer);
 	memset(buffer, 0, BUFLEN); // Reset buffer
 	
 	len = sizeof(netEmuSvr);
 	
-	fprintf(stdout, "STARTING SERVICE\n\n");
-	fprintf(logFile, "STARTING SERVICE\n\n");
+	logMessage("STARTING SERVICE\n\n");
 	fclose(logFile);
 	// Loop forever until there’s nothing else to do
 	while (1)
 	{
 		logFile = fopen("./logTransmitter.txt", "a");
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+		logMessage("\n");
 		// Create the DATA packets
 		for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
 		{
@@ -139,23 +153,9 @@ int main()
 					packets[i].PacketType = DATA;
 				}
 				
-				fprintf(stdout, "Created ");
-				fprintf(logFile, "Created ");
-				switch (packets[i].PacketType)
-				{
-					case (DATA):
-						fprintf(stdout, "DATA");
-						fprintf(logFile, "DATA");
-						break;
-					case (EOT):
-						fprintf(stdout, "EOT");
-						fprintf(logFile, "EOT");
-						break;
-					default:
-						break;
-				}
-				fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
-				fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				logMessage("Created ");
+				logPacketType(packets[i].PacketType);
+				logMessage("[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
 				// If the window size is less than BUFFER length, then we have the last bits of data
 				if (packets[i].WindowSize < BUFLEN)
 				{
@@ -177,43 +177,25 @@ int main()
 			}
 		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
-		fprintf(stdout, "Window After Creating Packets { ");
-		fprintf(logFile, "Window After Creating Packets { ");
+		logMessage("\n");
+		logMessage("Window After Creating Packets { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
-				switch (packets[i].PacketType)
-				{
-					case (DATA):
-						fprintf(stdout, "DATA");
-						fprintf(logFile, "DATA");
-						break;
-					case (EOT):
-						fprintf(stdout, "EOT");
-						fprintf(logFile, "EOT");
-						break;
-					default:
-						break;
-				}
-				fprintf(stdout, "[%d]", packets[i].SeqNum);
-				fprintf(logFile, "[%d]", packets[i].SeqNum);
+				logPacketType(packets[i].PacketType);
+				logMessage("[%d]", packets[i].SeqNum);
 			}
 			else
 			{
-				fprintf(stdout, "-%d-", packets[i].SeqNum);
-				fprintf(logFile, "-%d-", packets[i].SeqNum);
+				logMessage("-%d-", packets[i].SeqNum);
 			}
 			if (i < (SLIDING_WINDOW_SIZE-1))
 			{
-				fprintf(stdout, ", ");
-				fprintf(logFile, ", ");
+				logMessage(", ");
 			}
 		}
-		fprintf(stdout, " }\n");
-		fprintf(logFile, " }\n");
+		logMessage(" }\n");
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
@@ -222,37 +204,22 @@ int main()
 			{
 				if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 				{
-					fprintf(stdout, "ERROR: Couldn't send packets. %s\n", strerror(errno));
-					fprintf(logFile, "ERROR: Couldn't send packets. %s\n", strerror(errno));
+					logMessage("ERROR: Couldn't send packets. %s\n", strerror(errno));
 				}
 				else
 				{
 					if (timeoutOccurred)
 					{
-						fprintf(stdout, "Resent ");
-						fprintf(logFile, "Resent ");
+						logMessage("Resent ");
 					}
 					else
 					{
-						fprintf(stdout, "Sent ");
-						fprintf(logFile, "Sent ");
+						logMessage("Sent ");
 					}
 					
-					switch (packets[i].PacketType)
-					{
-						case (DATA):
-							fprintf(stdout, "DATA");
-							fprintf(logFile, "DATA");
-							break;
-						case (EOT):
-							fprintf(stdout, "EOT");
-							fprintf(logFile, "EOT");
-							break;
-						default:
-							break;
-					}
-					fprintf(stdout, "[%d]\n", packets[i].SeqNum);
-					fprintf(logFile, "[%d]\n", packets[i].SeqNum);
+					
+					logPacketType(packets[i].PacketType);
+					logMessage("[%d]\n", packets[i].SeqNum);
 				}
 			}
 		}
@@ -261,8 +228,7 @@ int main()
 			timeoutOccurred = 0;
 		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+		logMessage("\n");
 		
 		// Receive the ACKs
 		while (eotRecvd == 0)
@@ -270,8 +236,7 @@ int main()
 			if (recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len) < 0)
 			{
 				// Timeout occurred
-				fprintf(stdout, "===Timeout occurred===\n");
-				fprintf(logFile, "===Timeout occurred===\n");
+				logMessage("===Timeout occurred===\n");
 				timeoutOccurred = 1;
 				break;
 			}
@@ -288,15 +253,13 @@ int main()
 					{
 						packets[i].PacketType = UNINITIALISED;
 						memset(packets[i].data, 0, BUFLEN); // Reset buffer
-						fprintf(stdout, "Received ACK[%d]\n", recvPacket.AckNum);
-						fprintf(logFile, "Received ACK[%d]\n", recvPacket.AckNum);
+						logMessage("Received ACK[%d]\n", recvPacket.AckNum);
 					}
 				}
 			}
 		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+		logMessage("\n");
 		
 		// Check to see if there are packets that didn't receive an ACK
 		windowSlideDistance = SLIDING_WINDOW_SIZE;
@@ -325,41 +288,24 @@ int main()
 			}
 		}
 		
-		fprintf(stdout, "Window After ACKs { ");
-		fprintf(logFile, "Window After ACKs { ");
+		logMessage("Window After ACKs { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
-				switch (packets[i].PacketType)
-				{
-					case (DATA):
-						fprintf(stdout, "DATA");
-						fprintf(logFile, "DATA");
-						break;
-					case (EOT):
-						fprintf(stdout, "EOT");
-						fprintf(logFile, "EOT");
-						break;
-					default:
-						break;
-				}
-				fprintf(stdout, "[%d]", packets[i].SeqNum);
-				fprintf(logFile, "[%d]", packets[i].SeqNum);
+				logPacketType(packets[i].PacketType);
+				logMessage("[%d]", packets[i].SeqNum);
 			}
 			else
 			{
-				fprintf(stdout, "-%d-", packets[i].SeqNum);
-				fprintf(logFile, "-%d-", packets[i].SeqNum);
+				logMessage("-%d-", packets[i].SeqNum);
 			}
 			if (i < (SLIDING_WINDOW_SIZE-1))
 			{
-				fprintf(stdout, ", ");
-				fprintf(logFile, ", ");
+				logMessage(", ");
 			}
 		}
-		fprintf(stdout, " }\n");
-		fprintf(logFile, " }\n");
+		logMessage(" }\n");
 		
 		// If we're in the last phase...
 		if (onTheLastPacket)
@@ -377,8 +323,7 @@ int main()
 			
 			if (allPacketsAckd)
 			{
-				fprintf(stdout, "END OF SERVICE\n");
-				fprintf(logFile, "END OF SERVICE\n");
+				logMessage("END OF SERVICE\n");
 				break;
 			}
 		}
