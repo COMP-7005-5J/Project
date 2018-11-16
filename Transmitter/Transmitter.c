@@ -11,6 +11,7 @@
 #include <arpa/inet.h> // ntoa()
 #include <errno.h> // errno
 #include <sys/time.h> // struct timeval
+#include <netdb.h> // gethostbyname
 
 #define SLIDING_WINDOW_SIZE 4
 
@@ -26,17 +27,19 @@ int main()
 	int allPacketsAckd = 1;
 	int eotRecvd = 0;
 	int seqNum = 1;
-	int timeoutOccurred = 0;
 	int onTheLastPacket = 0;
+	int port = 8080;
+	int timeoutOccurred = 0;
 	int windowSlideDistance = SLIDING_WINDOW_SIZE;
 	struct timeval timeout = { .tv_sec = 7, .tv_usec = 0};
 	int transmitterSocket;
 	socklen_t len;
+	struct hostent *hp;
 	struct packet packets[SLIDING_WINDOW_SIZE];
 	struct packet recvPacket;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in transmitterSvr;
-
+	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
 	logMessage(1, "Loaded configurations\n");
@@ -54,12 +57,33 @@ int main()
 		exit(0);
 	}
 	
-	
 	// Set up transmitter server
 	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
 	transmitterSvr.sin_family = AF_INET;
-	transmitterSvr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	transmitterSvr.sin_port = htons(8080);
+	
+	// Get the host
+	fprintf(stdout, "Enter your IP address (host)\n");
+	fgets(buffer, sizeof(buffer), stdin);
+	buffer[strlen(buffer) - 1] = '\0';
+	if ((hp = gethostbyname(buffer)) == NULL)
+	{
+		fprintf(stderr, "Unknown server address\n");
+		exit(1);
+	}
+	bcopy(hp->h_addr, (char *)&transmitterSvr.sin_addr, hp->h_length);
+	memset(buffer, 0, BUFLEN); // Reset buffer
+	
+	//Get the port
+	fprintf(stdout, "Enter your preferred host (if you enter nothing then the default port, %d, will be used)\n", port);
+	fgets(buffer, sizeof(buffer), stdin);
+	buffer[strlen(buffer) - 1] = '\0';
+	if (strcmp(buffer, "") != 0)
+	{
+		port = atoi(buffer);
+	}
+	transmitterSvr.sin_port = htons(port);
+	
+	// Log resulting server
 	logMessage(1, "Created transmitter server\n");
 	logMessage(0, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
 	logMessage(0, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
@@ -298,4 +322,5 @@ int main()
 	close(transmitterSocket);
 	fclose(configFile);
 	fclose(logFile);
+	return 0;
 }

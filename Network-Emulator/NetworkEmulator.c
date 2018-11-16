@@ -14,6 +14,7 @@
 int bitErrorRate;
 int emulatorSocket;
 int directionToRec = 1;
+int eotSent = 0;
 struct sockaddr_in *DestSvr;
 
 void forward(struct packet pkt)
@@ -30,6 +31,7 @@ void forward(struct packet pkt)
 			break;
 		case (EOT):
 			strcpy(type, "EOT");
+			eotSent = 1;
 			if (directionToRec)
 			{
 				repNum = pkt.SeqNum;
@@ -65,6 +67,10 @@ void forward(struct packet pkt)
 	}
 	else
 	{
+		if (eotSent == 1)
+		{
+			eotSent = 0;
+		}
 		logMessage(1, "Dropped %s[%d]\n", type, repNum);
 	}
 	
@@ -79,8 +85,6 @@ int main()
 	FILE *configFile = fopen("../config.txt", "r");
 	logFile = fopen("./logEmulator.txt", "w+");
 	int avgDelay;
-	int eotRecvd = 0;
-	int eotSent = 0;
 	int pktsDelayed = 0;
 	socklen_t fromLen;
 	socklen_t len;
@@ -89,7 +93,6 @@ int main()
 	struct sockaddr_in recSvr;
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in fromAddr;
-	struct timeval timeout = { .tv_sec = 2, .tv_usec = 0};
 	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
@@ -97,7 +100,6 @@ int main()
 
 	// Create socket
 	emulatorSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	setsockopt(emulatorSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 	logMessage(1, "Created socket\n");
 	
 	// Set up network emulator server
@@ -149,7 +151,7 @@ int main()
 		logFile = fopen("./logEmulator.txt", "a");
 		logMessage(0, "\n");
 		logMessage(1, "Waiting for DATA...\n");
-		while (eotRecvd == 0)
+		while (eotSent == 0)
 		{
 			fromLen = sizeof(fromAddr);
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) < 0)
@@ -158,11 +160,6 @@ int main()
 			}
 			else
 			{
-				if (recvPacket.PacketType == EOT)
-				{
-					eotRecvd = 1;
-				}
-				
 				pkt = recvPacket;
 				if (pktsDelayed == 0)
 				{
@@ -179,7 +176,7 @@ int main()
 		directionToRec = 0;
 		
 		logMessage(1, "Waiting for ACKs...\n");
-		while (eotSent == 0)
+		while (1)
 		{
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
 			{
@@ -189,11 +186,6 @@ int main()
 			}
 			else
 			{
-				if (recvPacket.PacketType == EOT)
-				{
-					eotSent = 1;
-				}
-				
 				pkt = recvPacket;
 				if (pktsDelayed == 0)
 				{
@@ -201,11 +193,15 @@ int main()
 					pktsDelayed = 1;
 				}
 				forward(pkt);
+				
+				if (recvPacket.PacketType == EOT)
+				{
+					break;
+				}
 			}
 		}
 		
 		// Reset variables
-		eotRecvd = 0;
 		eotSent = 0;
 		DestSvr = &recSvr;
 		pktsDelayed = 0;
@@ -214,5 +210,5 @@ int main()
 	}
 	fclose(configFile);
 	close(emulatorSocket);
-	exit(0);
+	return 0;
 }
