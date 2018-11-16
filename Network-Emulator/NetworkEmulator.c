@@ -11,11 +11,6 @@
 #include <arpa/inet.h> // ntoa()
 #include <sys/time.h> // struct timeval
 
-#define BUFLEN 255
-#define DATA 1
-#define EOT 2
-#define ACK 3
-
 int bitErrorRate;
 int emulatorSocket;
 int directionToRec = 1;

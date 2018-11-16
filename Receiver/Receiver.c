@@ -10,11 +10,6 @@
 #include <string.h>
 #include <arpa/inet.h> // ntoa()
 
-#define BUFLEN 255
-#define DATA 1
-#define EOT 2
-#define ACK 3
-
 int main()
 {
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
@@ -110,7 +105,7 @@ int main()
 						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
 					}
 					logPacketType(recvPacket.PacketType);
-					logMessage(0, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+					logMessage(0, "[%d], LEN: %d, ACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
 				
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;

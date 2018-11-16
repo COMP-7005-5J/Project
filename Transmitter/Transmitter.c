@@ -12,12 +12,7 @@
 #include <errno.h> // errno
 #include <sys/time.h> // struct timeval
 
-#define BUFLEN 255
 #define SLIDING_WINDOW_SIZE 4
-#define UNINITIALISED 0
-#define DATA 1
-#define EOT 2
-#define ACK 3
 
 FILE *logFile;
 
@@ -122,7 +117,7 @@ int main()
 				
 				logMessage(1, "Created ");
 				logPacketType(packets[i].PacketType);
-				logMessage(0, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				logMessage(0, "[%d], LEN: %d, ACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
 				// If the window size is less than BUFFER length, then we have the last bits of data
 				if (packets[i].WindowSize < BUFLEN)
 				{

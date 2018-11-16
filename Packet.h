@@ -4,6 +4,7 @@
 #pragma once
 
 #define BUFLEN 255
+#define UNINITIALISED 0
 #define DATA 1
 #define EOT 2
 #define ACK 3
