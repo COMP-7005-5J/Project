@@ -25,7 +25,7 @@ struct packet
 int main()
 {
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
-	FILE *configFile = fopen("./config.txt", "r");
+	FILE *configFile = fopen("../config.txt", "r");
 	FILE *destFile;
 	logFile = fopen("./logReceiver.txt", "w+");
 	int recvSocket;

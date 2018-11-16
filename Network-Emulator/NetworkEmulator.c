@@ -92,7 +92,7 @@ int main()
 {
 	char buffer[BUFLEN];
 	char networkIP[16], networkPort[6], receiverIP[16], receiverPort[6];
-	FILE *configFile = fopen("./config.txt", "r");
+	FILE *configFile = fopen("../config.txt", "r");
 	logFile = fopen("./logEmulator.txt", "w+");
 	int avgDelay;
 	int eotRecvd = 0;
