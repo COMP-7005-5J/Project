@@ -1,3 +1,6 @@
+#include "../Log.h"
+#include "../Packet.h"
+
 #include <stdio.h> // FILE
 #include <stdlib.h> // fprintf()
 #include <netinet/in.h> // struct sockaddr_in
@@ -11,16 +14,6 @@
 #define DATA 1
 #define EOT 2
 #define ACK 3
-
-FILE *logFile;
-struct packet
-{
-	int PacketType;
-	int SeqNum;
-	char data[BUFLEN];
-	int WindowSize;
-	int AckNum;
-};
 
 int main()
 {
@@ -44,51 +37,40 @@ int main()
 	
 	// Get the configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
-	fprintf(stdout, "Loaded configurations\n");
-	fprintf(logFile, "Loaded configurations\n");
+	logMessage("Loaded configurations\n");
 
 	// Create socket
 	recvSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	fprintf(stdout, "Created socket\n");
-	fprintf(logFile, "Created socket\n");
+	logMessage("Created socket\n");
 	
 	// Set up receiver server
 	bzero((char*)&recSvr,sizeof(struct sockaddr_in));
 	recSvr.sin_family = AF_INET;
 	recSvr.sin_addr.s_addr = inet_addr(receiverIP);
 	recSvr.sin_port = htons(atoi(receiverPort));
-	fprintf(stdout, "Created receiver's server\n");
-	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(recSvr.sin_addr));
-	fprintf(stdout, "\tPort: %d\n", ntohs(recSvr.sin_port));
-	fprintf(logFile, "Created receiver's server\n");
-	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(recSvr.sin_addr));
-	fprintf(logFile, "\tPort: %d\n", ntohs(recSvr.sin_port));
+	logMessage("Created receiver's server\n");
+	logMessage("\tAddress: %s\n", inet_ntoa(recSvr.sin_addr));
+	logMessage("\tPort: %d\n", ntohs(recSvr.sin_port));
 	
 	// Bind socket
 	len = sizeof(recSvr);
 	if (bind(recvSocket, (struct sockaddr *) &recSvr, len) < 0)
 	{
-		fprintf(stdout, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
-		fprintf(logFile, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		logMessage("ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
 	//args.RecvSocket = &recvSocket;
-	fprintf(stdout, "Binded socket\n");
-	fprintf(logFile, "Binded socket\n");
+	logMessage("Binded socket\n");
 	
 	// Set up the network emulator server
 	netEmuSvr.sin_family = AF_INET;
 	inet_aton(networkIP, &netEmuSvr.sin_addr);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	fprintf(stdout, "Created destination server\n");
-	fprintf(stdout, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	fprintf(stdout, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
-	fprintf(logFile, "Created destination server\n");
-	fprintf(logFile, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	fprintf(logFile, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	logMessage("Created destination server\n");
+	logMessage("\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	logMessage("\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
-	fprintf(stdout, "STARTING SERVICE\n\n");
-	fprintf(logFile, "STARTING SERVICE\n\n");
+	logMessage("STARTING SERVICE\n\n");
 	destFile = fopen("./2.txt", "w+");
 	fclose(destFile);
 	fclose(logFile);
@@ -117,23 +99,18 @@ int main()
 					// Extent array to store another packet
 					++numOfPktsRecvd;
 					pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
-					fprintf(stdout, "Received ");
-					fprintf(logFile, "Received ");
+					logMessage("Received ");
 					if (recvPacket.PacketType == EOT)
 					{
 						eotRecvd = 1;
 						pktsToAck[numOfPktsRecvd-1].PacketType = EOT;
-						fprintf(stdout, "EOT");
-						fprintf(logFile, "EOT");
 					}
 					else
 					{
 						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
-						fprintf(stdout, "DATA");
-						fprintf(logFile, "DATA");
 					}
-					fprintf(stdout, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
-					fprintf(logFile, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+					logPacketType(recvPacket.PacketType);
+					logMessage("[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
 				
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
@@ -150,31 +127,25 @@ int main()
 			}
 			else
 			{
-				fprintf(stdout, "Error: Couldn't receive packet. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't receive packet. %s\n", strerror(errno));
+				logMessage("Error: Couldn't receive packet. %s\n", strerror(errno));
 			}
 		}
 		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+		logMessage("\n");
 		
 		// Send ACKs for each packet received
 		for (int i = 0; i < numOfPktsRecvd; i++)
 		{
 			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 			{
-				fprintf(stdout, "Error: Couldn't send packet. %s\n", strerror(errno));
-				fprintf(logFile, "Error: Couldn't send packet. %s\n", strerror(errno));
+				logMessage("Error: Couldn't send packet. %s\n", strerror(errno));
 			}
 			else
 			{
-				fprintf(stdout, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
-				fprintf(logFile, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
+				logMessage("Sent ACK[%d]\n", pktsToAck[i].AckNum);
 			}
 		}
-		
-		fprintf(stdout, "\n");
-		fprintf(logFile, "\n");
+		logMessage("\n");
 		
 		// Reset variables
 		numOfPktsRecvd = 0;
