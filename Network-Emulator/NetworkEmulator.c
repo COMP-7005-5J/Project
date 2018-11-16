@@ -54,23 +54,23 @@ void forward(struct packet pkt)
 	{
 		if (sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr)) < 0)
 		{
-			logMessage("ERROR: Couldn't send pkt. %s\n", strerror(errno));
+			logMessage(0, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
 		}
 		else
 		{
 			if (directionToRec)
 			{
-				logMessage("%s[%d] >>> %s:%d\n", type, repNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
+				logMessage(0, "%s[%d] >>> %s:%d\n", type, repNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
 			}
 			else
 			{
-				logMessage("%s:%d <<< %s[%d]\n", inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port), type, repNum);
+				logMessage(0, "%s:%d <<< %s[%d]\n", inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port), type, repNum);
 			}
 		}
 	}
 	else
 	{
-		logMessage("Dropped %s[%d]\n", type, repNum);
+		logMessage(1, "Dropped %s[%d]\n", type, repNum);
 	}
 	
 	//fclose(logFile);
@@ -98,39 +98,39 @@ int main()
 	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
-	logMessage("Loaded configurations\n");
+	logMessage(1, "Loaded configurations\n");
 
 	// Create socket
 	emulatorSocket = socket(AF_INET, SOCK_DGRAM, 0);
 	setsockopt(emulatorSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-	logMessage("Created socket\n");
+	logMessage(1, "Created socket\n");
 	
 	// Set up network emulator server
 	bzero((char*)&netEmuSvr,sizeof(struct sockaddr_in));
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	logMessage("Created network emulator server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	logMessage("\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	logMessage(1, "Created network emulator server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
 	// Bind socket
 	len = sizeof(netEmuSvr);
 	if (bind(emulatorSocket, (struct sockaddr *) &netEmuSvr, len) < 0)
 	{
-		logMessage("ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		logMessage(1, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
-	logMessage("Binded socket\n");
+	logMessage(1, "Binded socket\n");
 	
 	// Set up destination server
 	recSvr.sin_family = AF_INET;
 	inet_aton(receiverIP, &recSvr.sin_addr);
 	recSvr.sin_port = htons(atoi(receiverPort));
 	DestSvr = &recSvr;
-	logMessage("Created destination server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(DestSvr->sin_addr));
-	logMessage("\tPort: %d\n", ntohs(DestSvr->sin_port));
+	logMessage(1, "Created destination server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(DestSvr->sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(DestSvr->sin_port));
 	
 	// Get the BER
 	fprintf(stdout, "Enter your desired Bit Error Rate percentage (int)\n");
@@ -138,22 +138,22 @@ int main()
 	buffer[strlen(buffer) - 1] = '\0';
 	bitErrorRate = atoi(buffer);
 	memset(buffer, 0, sizeof(buffer)); // Reset buffer
-	logMessage("BER: %d\n", bitErrorRate);
+	logMessage(1, "BER: %d\n", bitErrorRate);
 	
 	// Get the Avg Delay
 	fprintf(stdout, "Enter your desired delay when a packet is received and sent (seconds)\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	avgDelay = atoi(buffer);
-	logMessage("Avg Delay: %d\n", avgDelay);
+	logMessage(1, "Avg Delay: %d\n", avgDelay);
 	
-	logMessage("STARTING SERVICE\n\n");
+	logMessage(1, "STARTING SERVICE\n\n");
 	fclose(logFile);
 	while (1)
 	{
 		logFile = fopen("./logEmulator.txt", "a");
-		logMessage("\n");
-		logMessage("Waiting for DATA...\n");
+		logMessage(0, "\n");
+		logMessage(1, "Waiting for DATA...\n");
 		while (eotRecvd == 0)
 		{
 			fromLen = sizeof(fromAddr);
@@ -177,19 +177,19 @@ int main()
 				forward(pkt);
 			}
 		}
-		logMessage("\n");
+		logMessage(0, "\n");
 		
 		DestSvr = &fromAddr;
 		pktsDelayed = 0;
 		directionToRec = 0;
 		
-		logMessage("Waiting for ACKs...\n");
+		logMessage(1, "Waiting for ACKs...\n");
 		while (eotSent == 0)
 		{
 			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
 			{
 				// Timeout occurred
-				logMessage("===Timeout occurred===\n");
+				logMessage(1, "===Timeout occurred===\n");
 				break;
 			}
 			else

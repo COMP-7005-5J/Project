@@ -37,40 +37,40 @@ int main()
 	
 	// Get the configurations
 	fscanf(configFile, "%s %s %s %s", networkIP, networkPort, receiverIP, receiverPort);
-	logMessage("Loaded configurations\n");
+	logMessage(1, "Loaded configurations\n");
 
 	// Create socket
 	recvSocket = socket(AF_INET, SOCK_DGRAM, 0);
-	logMessage("Created socket\n");
+	logMessage(1, "Created socket\n");
 	
 	// Set up receiver server
 	bzero((char*)&recSvr,sizeof(struct sockaddr_in));
 	recSvr.sin_family = AF_INET;
 	recSvr.sin_addr.s_addr = inet_addr(receiverIP);
 	recSvr.sin_port = htons(atoi(receiverPort));
-	logMessage("Created receiver's server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(recSvr.sin_addr));
-	logMessage("\tPort: %d\n", ntohs(recSvr.sin_port));
+	logMessage(1, "Created receiver's server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(recSvr.sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(recSvr.sin_port));
 	
 	// Bind socket
 	len = sizeof(recSvr);
 	if (bind(recvSocket, (struct sockaddr *) &recSvr, len) < 0)
 	{
-		logMessage("ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		logMessage(1, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
 	//args.RecvSocket = &recvSocket;
-	logMessage("Binded socket\n");
+	logMessage(1, "Binded socket\n");
 	
 	// Set up the network emulator server
 	netEmuSvr.sin_family = AF_INET;
 	inet_aton(networkIP, &netEmuSvr.sin_addr);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	logMessage("Created destination server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	logMessage("\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	logMessage(1, "Created destination server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
-	logMessage("STARTING SERVICE\n\n");
+	logMessage(1, "STARTING SERVICE\n\n");
 	destFile = fopen("./2.txt", "w+");
 	fclose(destFile);
 	fclose(logFile);
@@ -99,7 +99,7 @@ int main()
 					// Extent array to store another packet
 					++numOfPktsRecvd;
 					pktsToAck = realloc(pktsToAck, numOfPktsRecvd * sizeof(*pktsToAck));
-					logMessage("Received ");
+					logMessage(1, "Received ");
 					if (recvPacket.PacketType == EOT)
 					{
 						eotRecvd = 1;
@@ -110,7 +110,7 @@ int main()
 						pktsToAck[numOfPktsRecvd-1].PacketType = ACK;
 					}
 					logPacketType(recvPacket.PacketType);
-					logMessage("[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
+					logMessage(0, "[%d]  \tLEN: %d\tACK: %d\n", recvPacket.SeqNum, recvPacket.WindowSize, recvPacket.AckNum);
 				
 					// Put packet into array to keep track of what to ACK
 					pktsToAck[numOfPktsRecvd-1].SeqNum = recvPacket.AckNum;
@@ -127,25 +127,25 @@ int main()
 			}
 			else
 			{
-				logMessage("Error: Couldn't receive packet. %s\n", strerror(errno));
+				logMessage(1, "Error: Couldn't receive packet. %s\n", strerror(errno));
 			}
 		}
 		
-		logMessage("\n");
+		logMessage(0, "\n");
 		
 		// Send ACKs for each packet received
 		for (int i = 0; i < numOfPktsRecvd; i++)
 		{
 			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 			{
-				logMessage("Error: Couldn't send packet. %s\n", strerror(errno));
+				logMessage(1, "Error: Couldn't send packet. %s\n", strerror(errno));
 			}
 			else
 			{
-				logMessage("Sent ACK[%d]\n", pktsToAck[i].AckNum);
+				logMessage(1, "Sent ACK[%d]\n", pktsToAck[i].AckNum);
 			}
 		}
-		logMessage("\n");
+		logMessage(0, "\n");
 		
 		// Reset variables
 		numOfPktsRecvd = 0;

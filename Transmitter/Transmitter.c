@@ -44,18 +44,18 @@ int main()
 
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
-	logMessage("Loaded configurations\n");
+	logMessage(1, "Loaded configurations\n");
 
 	// Create socket
 	transmitterSocket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (transmitterSocket > 0)
 	{
 		setsockopt(transmitterSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-		logMessage("Created socket\n");
+		logMessage(1, "Created socket\n");
 	}
 	else
 	{
-		logMessage("ERROR: Creating socket. %s\n", strerror(errno));
+		logMessage(1, "ERROR: Creating socket. %s\n", strerror(errno));
 		exit(0);
 	}
 	
@@ -65,44 +65,44 @@ int main()
 	transmitterSvr.sin_family = AF_INET;
 	transmitterSvr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	transmitterSvr.sin_port = htons(8080);
-	logMessage("Created transmitter server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
-	logMessage("\tPort: %d\n", ntohs(transmitterSvr.sin_port));
+	logMessage(1, "Created transmitter server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(transmitterSvr.sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(transmitterSvr.sin_port));
 	
 	// Bind socket
 	len = sizeof(transmitterSvr);
 	if (bind(transmitterSocket, (struct sockaddr *) &transmitterSvr, len) < 0)
 	{
-		logMessage("ERROR: Couldn't bind socket. %s\n", strerror(errno));
+		logMessage(1, "ERROR: Couldn't bind socket. %s\n", strerror(errno));
 		exit(0);
 	}
-	logMessage("Binded socket\n");
+	logMessage(1, "Binded socket\n");
 
 	// Set up network emulator server
 	netEmuSvr.sin_family = AF_INET;
 	netEmuSvr.sin_addr.s_addr = inet_addr(networkIP);
 	netEmuSvr.sin_port = htons(atoi(networkPort));
-	logMessage("Created network emulator server\n");
-	logMessage("\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
-	logMessage("\tPort: %d\n", ntohs(netEmuSvr.sin_port));
+	logMessage(1, "Created network emulator server\n");
+	logMessage(0, "\tAddress: %s\n", inet_ntoa(netEmuSvr.sin_addr));
+	logMessage(0, "\tPort: %d\n", ntohs(netEmuSvr.sin_port));
 	
 	// Open the file to send
 	fprintf(stdout, "Enter name of file\n");
 	fgets(buffer, sizeof(buffer), stdin);
 	buffer[strlen(buffer) - 1] = '\0';
 	fileToSend = fopen(buffer, "r");
-	logMessage("Opened file: %s\n", buffer);
+	logMessage(1, "Opened file: %s\n", buffer);
 	memset(buffer, 0, BUFLEN); // Reset buffer
 	
 	len = sizeof(netEmuSvr);
 	
-	logMessage("STARTING SERVICE\n\n");
+	logMessage(1, "STARTING SERVICE\n\n");
 	fclose(logFile);
 	// Loop forever until there’s nothing else to do
 	while (1)
 	{
 		logFile = fopen("./logTransmitter.txt", "a");
-		logMessage("\n");
+		logMessage(0, "\n");
 		// Create the DATA packets
 		for (int i = (SLIDING_WINDOW_SIZE - windowSlideDistance); i < SLIDING_WINDOW_SIZE; i++)
 		{
@@ -120,9 +120,9 @@ int main()
 					packets[i].PacketType = DATA;
 				}
 				
-				logMessage("Created ");
+				logMessage(1, "Created ");
 				logPacketType(packets[i].PacketType);
-				logMessage("[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
+				logMessage(0, "[%d]  \tLEN: %d\tACK: %d\n", packets[i].SeqNum, packets[i].WindowSize, packets[i].AckNum);
 				// If the window size is less than BUFFER length, then we have the last bits of data
 				if (packets[i].WindowSize < BUFLEN)
 				{
@@ -144,25 +144,25 @@ int main()
 			}
 		}
 		
-		logMessage("\n");
-		logMessage("Window After Creating Packets { ");
+		logMessage(0, "\n");
+		logMessage(1, "Window After Creating Packets { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
 				logPacketType(packets[i].PacketType);
-				logMessage("[%d]", packets[i].SeqNum);
+				logMessage(0, "[%d]", packets[i].SeqNum);
 			}
 			else
 			{
-				logMessage("-%d-", packets[i].SeqNum);
+				logMessage(0, "-%d-", packets[i].SeqNum);
 			}
 			if (i < (SLIDING_WINDOW_SIZE-1))
 			{
-				logMessage(", ");
+				logMessage(0, ", ");
 			}
 		}
-		logMessage(" }\n");
+		logMessage(0, " }\n");
 
 		// Send the packets
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
@@ -171,22 +171,22 @@ int main()
 			{
 				if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
 				{
-					logMessage("ERROR: Couldn't send packets. %s\n", strerror(errno));
+					logMessage(1, "ERROR: Couldn't send packets. %s\n", strerror(errno));
 				}
 				else
 				{
 					if (timeoutOccurred)
 					{
-						logMessage("Resent ");
+						logMessage(1, "Resent ");
 					}
 					else
 					{
-						logMessage("Sent ");
+						logMessage(1, "Sent ");
 					}
 					
 					
 					logPacketType(packets[i].PacketType);
-					logMessage("[%d]\n", packets[i].SeqNum);
+					logMessage(0, "[%d]\n", packets[i].SeqNum);
 				}
 			}
 		}
@@ -195,7 +195,7 @@ int main()
 			timeoutOccurred = 0;
 		}
 		
-		logMessage("\n");
+		logMessage(0, "\n");
 		
 		// Receive the ACKs
 		while (eotRecvd == 0)
@@ -203,7 +203,7 @@ int main()
 			if (recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len) < 0)
 			{
 				// Timeout occurred
-				logMessage("===Timeout occurred===\n");
+				logMessage(1, "===Timeout occurred===\n");
 				timeoutOccurred = 1;
 				break;
 			}
@@ -220,13 +220,13 @@ int main()
 					{
 						packets[i].PacketType = UNINITIALISED;
 						memset(packets[i].data, 0, BUFLEN); // Reset buffer
-						logMessage("Received ACK[%d]\n", recvPacket.AckNum);
+						logMessage(1, "Received ACK[%d]\n", recvPacket.AckNum);
 					}
 				}
 			}
 		}
 		
-		logMessage("\n");
+		logMessage(0, "\n");
 		
 		// Check to see if there are packets that didn't receive an ACK
 		windowSlideDistance = SLIDING_WINDOW_SIZE;
@@ -255,24 +255,24 @@ int main()
 			}
 		}
 		
-		logMessage("Window After ACKs { ");
+		logMessage(1, "Window After ACKs { ");
 		for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
 				logPacketType(packets[i].PacketType);
-				logMessage("[%d]", packets[i].SeqNum);
+				logMessage(0, "[%d]", packets[i].SeqNum);
 			}
 			else
 			{
-				logMessage("-%d-", packets[i].SeqNum);
+				logMessage(0, "-%d-", packets[i].SeqNum);
 			}
 			if (i < (SLIDING_WINDOW_SIZE-1))
 			{
-				logMessage(", ");
+				logMessage(0, ", ");
 			}
 		}
-		logMessage(" }\n");
+		logMessage(0, " }\n");
 		
 		// If we're in the last phase...
 		if (onTheLastPacket)
@@ -290,7 +290,7 @@ int main()
 			
 			if (allPacketsAckd)
 			{
-				logMessage("END OF SERVICE\n");
+				logMessage(1, "END OF SERVICE\n");
 				break;
 			}
 		}
