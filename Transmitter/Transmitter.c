@@ -42,6 +42,12 @@ int main()
 	struct sockaddr_in netEmuSvr;
 	struct sockaddr_in transmitterSvr;
 	
+	// Set up packets
+	for (int i = 0; i < SLIDING_WINDOW_SIZE; i++)
+	{
+		packets[i].PacketType = UNINITIALISED;
+	}
+	
 	// Get the network emulator’s configurations
 	fscanf(configFile, "%s %s %*s %*s", networkIP, networkPort);
 	logMessage(1, "Loaded configurations\n");
