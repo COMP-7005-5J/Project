@@ -11,18 +11,24 @@
 #include <arpa/inet.h> // ntoa()
 #include <sys/time.h> // struct timeval
 
+//
+#define FROM_RECEIVER 0;
+#define FROM_TRANSMITTER 1;
+
 int bitErrorRate;
 int emulatorSocket;
-int directionToRec = 1;
+int directionToRec = FROM_TRANSMITTER;
 int eotSent = 0;
 struct sockaddr_in *DestSvr;
 
+// forwards the packet to a destination determined by directionToRec.
 void forward(struct packet pkt)
 {
 	//FILE *logFile = fopen("./logEmulator.txt", "a");
 	char *type = malloc(4 * sizeof(*type));
 	int repNum;
-	
+	int sentMsgLen;
+
 	switch(pkt.PacketType)
 	{
 		case (DATA):
@@ -32,7 +38,7 @@ void forward(struct packet pkt)
 		case (EOT):
 			strcpy(type, "EOT");
 			eotSent = 1;
-			if (directionToRec)
+			if (directionToRec == FROM_TRANSMITTER)
 			{
 				repNum = pkt.SeqNum;
 			}
@@ -47,15 +53,17 @@ void forward(struct packet pkt)
 			break;
 	}
 	
+	// generate a random number to see if the packet should be sent
 	if ((rand() % 100) > bitErrorRate)
 	{
-		if (sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr)) < 0)
+		sentMsgLen = sendto(emulatorSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *)DestSvr, sizeof(*DestSvr));
+		if (sentMsgLen == -1)
 		{
 			logMessage(0, "ERROR: Couldn't send pkt. %s\n", strerror(errno));
 		}
 		else
 		{
-			if (directionToRec)
+			if (directionToRec == FROM_TRANSMITTER)
 			{
 				logMessage(0, "%s[%d] >>> %s:%d\n", type, repNum, inet_ntoa(DestSvr->sin_addr), ntohs(DestSvr->sin_port));
 			}
@@ -85,6 +93,7 @@ int main()
 	FILE *configFile = fopen("../config.txt", "r");
 	logFile = fopen("./logEmulator.txt", "w+");
 	int avgDelay;
+	int receivedMsgLen;
 	int pktsDelayed = 0;
 	socklen_t fromLen;
 	socklen_t len;
@@ -154,7 +163,8 @@ int main()
 		while (eotSent == 0)
 		{
 			fromLen = sizeof(fromAddr);
-			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) < 0)
+			receivedMsgLen = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr *)&fromAddr, &fromLen);
+			if (receivedMsgLen == -1)
 			{
 				continue;
 			}
@@ -173,12 +183,13 @@ int main()
 		
 		DestSvr = &fromAddr;
 		pktsDelayed = 0;
-		directionToRec = 0;
+		directionToRec = FROM_RECEIVER;
 		
 		logMessage(1, "Waiting for ACKs...\n");
 		while (1)
 		{
-			if (recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL) < 0)
+			receivedMsgLen = recvfrom(emulatorSocket, &recvPacket, sizeof(recvPacket), 0, NULL, NULL);
+			if (receivedMsgLen == -1)
 			{
 				// Timeout occurred
 				logMessage(1, "===Timeout occurred===\n");
@@ -205,7 +216,7 @@ int main()
 		eotSent = 0;
 		DestSvr = &recSvr;
 		pktsDelayed = 0;
-		directionToRec = 1;
+		directionToRec = FROM_TRANSMITTER;
 		fclose(logFile);
 	}
 	fclose(configFile);
