@@ -12,8 +12,8 @@
 #include <sys/time.h> // struct timeval
 
 //
-#define FROM_RECEIVER 0;
-#define FROM_TRANSMITTER 1;
+#define FROM_RECEIVER 0
+#define FROM_TRANSMITTER 1
 
 int bitErrorRate;
 int emulatorSocket;
