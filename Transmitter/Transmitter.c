@@ -6,7 +6,7 @@
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h> // ntoa()
 #include <errno.h> // errno
@@ -33,6 +33,8 @@ int main()
 	int windowSlideDistance = SLIDING_WINDOW_SIZE;
 	struct timeval timeout = { .tv_sec = 7, .tv_usec = 0};
 	int transmitterSocket;
+	int receivedMsgLen;
+	int sentMsgLen;
 	socklen_t len;
 	struct hostent *hp;
 	struct packet packets[SLIDING_WINDOW_SIZE];
@@ -194,7 +196,8 @@ int main()
 		{
 			if (packets[i].PacketType != UNINITIALISED)
 			{
-				if (sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
+				sentMsgLen = sendto(transmitterSocket, &packets[i], sizeof(struct packet), 0, (struct sockaddr *)&netEmuSvr, sizeof(netEmuSvr));
+				if (sentMsgLen == -1) //sending error
 				{
 					logMessage(1, "ERROR: Couldn't send packets. %s\n", strerror(errno));
 				}
@@ -225,7 +228,8 @@ int main()
 		// Receive the ACKs
 		while (eotRecvd == 0)
 		{
-			if (recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len) < 0)
+			receivedMsgLen = recvfrom(transmitterSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&netEmuSvr, &len);
+			if (receivedMsgLen == -1)
 			{
 				// Timeout occurred
 				logMessage(1, "===Timeout occurred===\n");

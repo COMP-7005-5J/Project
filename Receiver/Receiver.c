@@ -17,6 +17,8 @@ int main()
 	FILE *destFile;
 	logFile = fopen("./logReceiver.txt", "w+");
 	int recvSocket;
+	int receivedMsgLen;
+	int sentMsgLen;
 	int duplicatePktRecvd = 0;
 	int eotRecvd = 0;
 	int numOfPktsRecvd = 0;
@@ -76,7 +78,8 @@ int main()
 		while (eotRecvd == 0)
 		{
 			// Receive packets
-			if (recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr*)&fromAddr, &fromLen) > 0)
+			receivedMsgLen = recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr *)&fromAddr, &fromLen);
+			if (receivedMsgLen > 0)
 			{
 				// Check if the packet received is a duplicate
 				for (int i = 0; i < numOfPktsRecvd; i++)
@@ -131,7 +134,8 @@ int main()
 		// Send ACKs for each packet received
 		for (int i = 0; i < numOfPktsRecvd; i++)
 		{
-			if (sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr)) < 0)
+			sentMsgLen = sendto(recvSocket, &pktsToAck[i], sizeof(struct packet), 0, (struct sockaddr*)&netEmuSvr, sizeof(netEmuSvr));
+			if (sentMsgLen == -1)
 			{
 				logMessage(1, "Error: Couldn't send packet. %s\n", strerror(errno));
 			}
