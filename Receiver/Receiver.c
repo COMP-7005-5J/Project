@@ -79,7 +79,7 @@ int main()
 		{
 			// Receive packets
 			receivedMsgLen = recvfrom(recvSocket, &recvPacket, sizeof(recvPacket), 0, (struct sockaddr *)&fromAddr, &fromLen);
-			if (receivedMsgLen == -1)
+			if (receivedMsgLen > 0)
 			{
 				// Check if the packet received is a duplicate
 				for (int i = 0; i < numOfPktsRecvd; i++)
