@@ -6,7 +6,7 @@
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h> // ntoa()
 #include <errno.h> // errno
